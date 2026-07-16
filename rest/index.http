@@ -1,0 +1,10 @@
+@hostname = localhost
+@port = 8300
+@host = {{hostname}}:{{port}}
+
+### app
+get http://{{host}}/api HTTP/1.1
+Content-Type: application/json
+
+### user
+get http://{{host}}/api/user HTTP/1.1
