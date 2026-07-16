@@ -17,6 +17,11 @@ export interface EnvironmentVariables {
   JWT_ACCESS_EXPIRE: string
   JWT_REFRESH_EXPIRE: string
   JWT_ISSUER: string
+  LOG_DIRNAME: string
+  LOG_FILENAME: string
+  LOG_DATE_PATTERN: string
+  LOG_MAX_SIZE: string
+  LOG_MAX_FILES: string
 }
 
 export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
@@ -39,4 +44,9 @@ export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
     .pattern(/^\d+(ms|s|m|h|d|w|y)$/)
     .required(),
   JWT_ISSUER: Joi.string().min(1).required(),
+  LOG_DIRNAME: Joi.string().min(1).required(),
+  LOG_FILENAME: Joi.string().min(1).required(),
+  LOG_DATE_PATTERN: Joi.string().min(1).required(),
+  LOG_MAX_SIZE: Joi.string().min(1).required(),
+  LOG_MAX_FILES: Joi.string().min(1).required(),
 })

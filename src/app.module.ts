@@ -5,10 +5,11 @@ import { AppService } from './app.service'
 import { ResponseInterceptor } from './common/interceptors/response.interceptor'
 import { AppConfigModule } from './config/config.module'
 import { DatabaseModule } from './database/database.module'
+import { LoggerModule } from './logger/logger.module'
 import { UserModule } from './user/user.module'
 
 @Module({
-  imports: [AppConfigModule, DatabaseModule, UserModule],
+  imports: [AppConfigModule, DatabaseModule, LoggerModule, UserModule],
   controllers: [AppController],
   providers: [
     AppService,
