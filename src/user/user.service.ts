@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
+import { hash } from 'bcryptjs'
 import { Repository } from 'typeorm'
+import { ResponseMessageEnum } from '../common/enums/response-message.enum'
+import type { ServiceErrorResult } from '../common/interceptors/response.interceptor'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
@@ -12,8 +15,35 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user'
+  async create(
+    createUserDto: CreateUserDto,
+  ): Promise<User | ServiceErrorResult> {
+    const [usernameExists, emailExists] = await Promise.all([
+      this.userRepository.existsBy({ username: createUserDto.username }),
+      this.userRepository.existsBy({ email: createUserDto.email }),
+    ])
+
+    if (usernameExists) {
+      return {
+        error: true,
+        message: ResponseMessageEnum.USERNAME_ALREADY_EXISTS,
+      }
+    }
+
+    if (emailExists) {
+      return {
+        error: true,
+        message: ResponseMessageEnum.EMAIL_ALREADY_EXISTS,
+      }
+    }
+
+    const password = await hash(createUserDto.password, 10)
+    const user = this.userRepository.create({
+      ...createUserDto,
+      password,
+    })
+
+    return this.userRepository.save(user)
   }
 
   findAll(): Promise<User[]> {
@@ -25,6 +55,7 @@ export class UserService {
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {
+    void updateUserDto
     return `This action updates a #${id} user`
   }
 

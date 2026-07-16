@@ -9,10 +9,10 @@ CREATE TABLE `user` (
   `nickname` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL COMMENT 'Hashed password',
   `deletedAt` timestamp NULL DEFAULT NULL COMMENT '删除时间',
-  `avatar` varchar(255) NOT NULL COMMENT '头像URL',
+  `avatar` varchar(255) DEFAULT NULL COMMENT '头像URL',
   `isEnabled` tinyint NOT NULL DEFAULT '1' COMMENT '启用/禁用',
   `isSystemDefault` tinyint NOT NULL DEFAULT '0' COMMENT '系统默认',
-  `email` varchar(11) NOT NULL,
+  `email` varchar(255) NOT NULL,
   PRIMARY KEY (`id`),
   KEY `idx_username` (`username`)
 ) ENGINE=InnoDB AUTO_INCREMENT=14 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

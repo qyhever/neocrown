@@ -1,4 +1,5 @@
 import { Column, Entity, Index } from 'typeorm'
+import { Exclude } from 'class-transformer'
 import { BaseEntity } from '../../common/entities/base.entity'
 
 @Entity({ name: 'user' })
@@ -10,11 +11,17 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   nickname!: string
 
-  @Column({ type: 'varchar', length: 255, comment: 'Hashed password', select: false })
+  @Exclude({ toPlainOnly: true })
+  @Column({
+    type: 'varchar',
+    length: 255,
+    comment: 'Hashed password',
+    select: false,
+  })
   password!: string
 
-  @Column({ type: 'varchar', length: 255, comment: '头像URL' })
-  avatar!: string
+  @Column({ type: 'varchar', length: 255, nullable: true, comment: '头像URL' })
+  avatar!: string | null
 
   @Column({ type: 'boolean', default: true, comment: '启用/禁用' })
   isEnabled!: boolean
@@ -22,6 +29,6 @@ export class User extends BaseEntity {
   @Column({ type: 'boolean', default: false, comment: '系统默认' })
   isSystemDefault!: boolean
 
-  @Column({ type: 'varchar', length: 11 })
+  @Column({ type: 'varchar', length: 255 })
   email!: string
 }
