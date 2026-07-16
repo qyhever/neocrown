@@ -10,7 +10,7 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   nickname!: string
 
-  @Column({ type: 'varchar', length: 255, comment: 'Hashed password' })
+  @Column({ type: 'varchar', length: 255, comment: 'Hashed password', select: false })
   password!: string
 
   @Column({ type: 'varchar', length: 255, comment: '头像URL' })

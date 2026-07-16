@@ -8,7 +8,7 @@ CREATE TABLE `user` (
   `username` varchar(50) NOT NULL,
   `nickname` varchar(50) NOT NULL,
   `password` varchar(255) NOT NULL COMMENT 'Hashed password',
-  `isDeleted` tinyint NOT NULL DEFAULT '0' COMMENT '是否删除',
+  `deletedAt` timestamp NULL DEFAULT NULL COMMENT '删除时间',
   `avatar` varchar(255) NOT NULL COMMENT '头像URL',
   `isEnabled` tinyint NOT NULL DEFAULT '1' COMMENT '启用/禁用',
   `isSystemDefault` tinyint NOT NULL DEFAULT '0' COMMENT '系统默认',
