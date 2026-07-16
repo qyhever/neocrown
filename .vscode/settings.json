@@ -1,0 +1,8 @@
+{
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "vue.inlayHints.optionsWrapper": false,
+  "files.encoding": "utf8",
+  "files.eol": "\n"
+}

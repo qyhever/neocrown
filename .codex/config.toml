@@ -1,0 +1,11 @@
+# sandbox_mode = "workspace-write"
+
+[features]
+sandbox = false  # 完全关闭沙箱，codex 和本机权限一致
+
+[mcp_servers.tdesign]
+command = "npx"
+args = ["-y", "tdesign-mcp-server@latest"]
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 60
