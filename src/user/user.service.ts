@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { hash } from 'bcryptjs'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import type { ServiceErrorResult } from '../common/interceptors/response.interceptor'
+import type { EnvironmentVariables } from '../config/environment.validation'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
@@ -9,7 +11,10 @@ import { UserRepository } from './repositories/user.repository'
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
+  ) {}
 
   async create(
     createUserDto: CreateUserDto,
@@ -33,7 +38,10 @@ export class UserService {
       }
     }
 
-    const password = await hash(createUserDto.password, 10)
+    const bcryptRounds = this.configService.get('BCRYPT_ROUNDS', {
+      infer: true,
+    })
+    const password = await hash(createUserDto.password, bcryptRounds)
     const user = this.userRepository.create({
       ...createUserDto,
       password,

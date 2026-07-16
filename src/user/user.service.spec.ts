@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing'
-import { compare } from 'bcryptjs'
+import { ConfigService } from '@nestjs/config'
+import { compare, getRounds } from 'bcryptjs'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import { CreateUserDto } from './dto/create-user.dto'
 import { User } from './entities/user.entity'
@@ -29,6 +30,12 @@ describe('UserService', () => {
         {
           provide: UserRepository,
           useValue: userRepository,
+        },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: jest.fn().mockReturnValue(10),
+          },
         },
       ],
     }).compile()
@@ -68,6 +75,7 @@ describe('UserService', () => {
         isEnabled: true,
       })
       expect(createPayload.password).not.toBe(createUserDto.password)
+      expect(getRounds(createPayload.password as string)).toBe(10)
       await expect(
         compare(createUserDto.password, createPayload.password as string),
       ).resolves.toBe(true)
