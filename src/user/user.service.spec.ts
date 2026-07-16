@@ -1,23 +1,25 @@
-import { getRepositoryToken } from '@nestjs/typeorm'
 import { Test, TestingModule } from '@nestjs/testing'
 import { compare } from 'bcryptjs'
-import { Repository } from 'typeorm'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import { CreateUserDto } from './dto/create-user.dto'
 import { User } from './entities/user.entity'
+import { UserRepository } from './repositories/user.repository'
 import { UserService } from './user.service'
+
+type UserRepositoryMock = {
+  [Method in keyof UserRepository]: jest.MockedFunction<UserRepository[Method]>
+}
 
 describe('UserService', () => {
   let service: UserService
-  let userRepository: jest.Mocked<
-    Pick<Repository<User>, 'create' | 'existsBy' | 'find' | 'save'>
-  >
+  let userRepository: UserRepositoryMock
 
   beforeEach(async () => {
     userRepository = {
       create: jest.fn(),
-      existsBy: jest.fn(),
-      find: jest.fn(),
+      existsByEmail: jest.fn(),
+      existsByUsername: jest.fn(),
+      findAll: jest.fn(),
       save: jest.fn(),
     }
 
@@ -25,7 +27,7 @@ describe('UserService', () => {
       providers: [
         UserService,
         {
-          provide: getRepositoryToken(User),
+          provide: UserRepository,
           useValue: userRepository,
         },
       ],
@@ -40,7 +42,8 @@ describe('UserService', () => {
 
   describe('create', () => {
     beforeEach(() => {
-      userRepository.existsBy.mockResolvedValue(false)
+      userRepository.existsByUsername.mockResolvedValue(false)
+      userRepository.existsByEmail.mockResolvedValue(false)
     })
 
     it('应该对明文密码加盐哈希后入库', async () => {
@@ -72,9 +75,7 @@ describe('UserService', () => {
     })
 
     it('用户名已存在时不应创建用户', async () => {
-      userRepository.existsBy
-        .mockResolvedValueOnce(true)
-        .mockResolvedValueOnce(false)
+      userRepository.existsByUsername.mockResolvedValue(true)
 
       await expect(
         service.create({
@@ -93,9 +94,7 @@ describe('UserService', () => {
     })
 
     it('邮箱已存在时不应创建用户', async () => {
-      userRepository.existsBy
-        .mockResolvedValueOnce(false)
-        .mockResolvedValueOnce(true)
+      userRepository.existsByEmail.mockResolvedValue(true)
 
       await expect(
         service.create({
@@ -117,10 +116,10 @@ describe('UserService', () => {
   describe('findAll', () => {
     it('should return all users', async () => {
       const users = [{ id: 1, username: 'admin' }] as User[]
-      userRepository.find.mockResolvedValue(users)
+      userRepository.findAll.mockResolvedValue(users)
 
       await expect(service.findAll()).resolves.toEqual(users)
-      expect(userRepository.find).toHaveBeenCalledTimes(1)
+      expect(userRepository.findAll).toHaveBeenCalledTimes(1)
     })
   })
 })

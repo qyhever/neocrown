@@ -1,26 +1,22 @@
 import { Injectable } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
 import { hash } from 'bcryptjs'
-import { Repository } from 'typeorm'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import type { ServiceErrorResult } from '../common/interceptors/response.interceptor'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
+import { UserRepository } from './repositories/user.repository'
 
 @Injectable()
 export class UserService {
-  constructor(
-    @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
-  ) {}
+  constructor(private readonly userRepository: UserRepository) {}
 
   async create(
     createUserDto: CreateUserDto,
   ): Promise<User | ServiceErrorResult> {
     const [usernameExists, emailExists] = await Promise.all([
-      this.userRepository.existsBy({ username: createUserDto.username }),
-      this.userRepository.existsBy({ email: createUserDto.email }),
+      this.userRepository.existsByUsername(createUserDto.username),
+      this.userRepository.existsByEmail(createUserDto.email),
     ])
 
     if (usernameExists) {
@@ -47,7 +43,7 @@ export class UserService {
   }
 
   findAll(): Promise<User[]> {
-    return this.userRepository.find()
+    return this.userRepository.findAll()
   }
 
   findOne(id: number) {
