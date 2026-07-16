@@ -1,7 +1,7 @@
 import * as Joi from 'joi'
 
 export type NodeEnvironment = 'development' | 'test' | 'production'
-export type DatabaseType = 'mysql'
+export type DatabaseType = 'mysql' | 'postgres'
 
 export interface EnvironmentVariables {
   NODE_ENV: NodeEnvironment
