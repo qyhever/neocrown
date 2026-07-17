@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory, type NestApplication } from '@nestjs/core'
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { join } from 'node:path'
 import { AppModule } from './app.module'
@@ -21,6 +22,20 @@ async function bootstrap() {
       whitelist: true,
     }),
   )
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Neocrown API')
+    .setDescription('Neocrown backend API documentation')
+    .setVersion('1.0.0')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+    })
+    .build()
+  const document = SwaggerModule.createDocument(app, swaggerConfig)
+  SwaggerModule.setup('/api/docs', app, document)
+
   await app.listen(configService.get('PORT', { infer: true }))
 }
 
