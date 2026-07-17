@@ -16,5 +16,6 @@ import { UserService } from './user.service'
       useClass: TypeOrmUserRepository,
     },
   ],
+  exports: [UserService, UserRepository],
 })
 export class UserModule {}

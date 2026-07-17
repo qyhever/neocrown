@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { EntityManager, In, Repository } from 'typeorm'
 import { User } from '../entities/user.entity'
 import { UserRepository } from './user.repository'
 
@@ -11,23 +11,53 @@ export class TypeOrmUserRepository implements UserRepository {
     private readonly repository: Repository<User>,
   ) {}
 
-  existsByUsername(username: string): Promise<boolean> {
-    return this.repository.existsBy({ username })
+  existsByUsername(
+    username: string,
+    manager?: EntityManager,
+  ): Promise<boolean> {
+    return this.getRepository(manager).existsBy({ username })
   }
 
-  existsByEmail(email: string): Promise<boolean> {
-    return this.repository.existsBy({ email })
+  existsByEmail(email: string, manager?: EntityManager): Promise<boolean> {
+    return this.getRepository(manager).existsBy({ email })
   }
 
-  create(data: Partial<User>): User {
-    return this.repository.create(data)
+  findLoginUserByEmail(email: string): Promise<User | null> {
+    return this.repository.findOne({
+      where: { email },
+      select: { id: true, isEnabled: true, password: true },
+    })
   }
 
-  save(user: User): Promise<User> {
-    return this.repository.save(user)
+  create(data: Partial<User>, manager?: EntityManager): User {
+    return this.getRepository(manager).create(data)
+  }
+
+  save(user: User, manager?: EntityManager): Promise<User> {
+    return this.getRepository(manager).save(user)
   }
 
   findAll(): Promise<User[]> {
     return this.repository.find()
+  }
+
+  findById(id: number): Promise<User | null> {
+    return this.repository.findOneBy({ id })
+  }
+
+  findByIds(ids: number[]): Promise<User[]> {
+    return this.repository.findBy({ id: In(ids) })
+  }
+
+  softRemove(user: User): Promise<User> {
+    return this.repository.softRemove(user)
+  }
+
+  softRemoveMany(users: User[]): Promise<User[]> {
+    return this.repository.softRemove(users)
+  }
+
+  private getRepository(manager?: EntityManager): Repository<User> {
+    return manager?.getRepository(User) ?? this.repository
   }
 }

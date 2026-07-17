@@ -4,7 +4,17 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
 import { Observable, map } from 'rxjs'
+import { SUCCESS_MESSAGE_KEY } from '../decorators/success-message.decorator'
+
+const SUCCESS_MESSAGES: Record<string, string> = {
+  GET: '查询成功',
+  POST: '创建成功',
+  PUT: '更新成功',
+  PATCH: '更新成功',
+  DELETE: '删除成功',
+}
 
 export interface ApiResponse<T> {
   success: boolean
@@ -32,6 +42,8 @@ export class ResponseInterceptor implements NestInterceptor<
   unknown,
   ApiResponse<unknown>
 > {
+  constructor(private readonly reflector: Reflector = new Reflector()) {}
+
   intercept(
     context: ExecutionContext,
     next: CallHandler<unknown>,
@@ -49,18 +61,24 @@ export class ResponseInterceptor implements NestInterceptor<
         return {
           success: true,
           data: data ?? null,
-          message: this.getSuccessMessage(),
+          message: this.getSuccessMessage(context),
         }
       }),
     )
   }
 
-  // private getSuccessMessage(context: ExecutionContext): string {
-  //   const request = context.switchToHttp().getRequest<{ method?: string }>()
+  private getSuccessMessage(context: ExecutionContext): string {
+    const customMessage = this.reflector.get<string>(
+      SUCCESS_MESSAGE_KEY,
+      context.getHandler(),
+    )
 
-  //   return SUCCESS_MESSAGES[request.method ?? ''] ?? '操作成功'
-  // }
-  private getSuccessMessage() {
-    return '请求成功'
+    if (customMessage) {
+      return customMessage
+    }
+
+    const request = context.switchToHttp().getRequest<{ method?: string }>()
+
+    return SUCCESS_MESSAGES[request.method ?? ''] ?? '操作成功'
   }
 }
