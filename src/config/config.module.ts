@@ -9,7 +9,11 @@ import { environmentValidationSchema } from './environment.validation'
       isGlobal: true,
       cache: true,
       expandVariables: true,
-      envFilePath: [`.env.${process.env.NODE_ENV ?? 'development'}`, '.env'],
+      envFilePath: [
+        '.env.local',
+        `.env.${process.env.NODE_ENV ?? 'development'}`,
+        '.env',
+      ],
       validationSchema: environmentValidationSchema,
       validationOptions: {
         abortEarly: false,

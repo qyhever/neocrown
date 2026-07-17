@@ -18,6 +18,7 @@ export interface EnvironmentVariables {
   JWT_REFRESH_EXPIRE: string
   JWT_ISSUER: string
   BCRYPT_ROUNDS: number
+  LOG_FILE_ENABLED: boolean
   LOG_DIRNAME: string
   LOG_FILENAME: string
   LOG_DATE_PATTERN: string
@@ -46,6 +47,7 @@ export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
     .required(),
   JWT_ISSUER: Joi.string().min(1).required(),
   BCRYPT_ROUNDS: Joi.number().integer().min(10).max(15).default(10),
+  LOG_FILE_ENABLED: Joi.boolean().default(false),
   LOG_DIRNAME: Joi.string().min(1).required(),
   LOG_FILENAME: Joi.string().min(1).required(),
   LOG_DATE_PATTERN: Joi.string().min(1).required(),
