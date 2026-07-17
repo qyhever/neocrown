@@ -14,7 +14,7 @@ describe('ResponseInterceptor', () => {
       switchToHttp: () => ({
         getRequest: () => ({ method }),
       }),
-    }) as ExecutionContext
+    }) as unknown as ExecutionContext
 
   it('应该包装正常返回值', async () => {
     const next: CallHandler = {

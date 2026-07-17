@@ -72,12 +72,13 @@ describe('AuthService', () => {
         work(manager),
       ),
     }
+    const signAsync = jest.fn() as jest.MockedFunction<SignToken>
+    signAsync
+      .mockResolvedValueOnce('access-token')
+      .mockResolvedValueOnce('refresh-token')
     jwtService = {
-      signAsync: jest
-        .fn<SignToken>()
-        .mockResolvedValueOnce('access-token')
-        .mockResolvedValueOnce('refresh-token'),
-      verifyAsync: jest.fn<VerifyToken>(),
+      signAsync,
+      verifyAsync: jest.fn() as jest.MockedFunction<VerifyToken>,
     }
     const module = await Test.createTestingModule({
       providers: [

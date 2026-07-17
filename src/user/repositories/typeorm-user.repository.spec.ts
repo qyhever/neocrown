@@ -137,7 +137,7 @@ describe('TypeOrmUserRepository', () => {
       ...user,
       deletedAt: new Date(),
     })) as User[]
-    typeOrmRepository.softRemove.mockResolvedValue(removedUsers)
+    typeOrmRepository.softRemove.mockResolvedValue(removedUsers as never)
 
     await expect(repository.softRemoveMany(users)).resolves.toBe(removedUsers)
     expect(typeOrmRepository.softRemove).toHaveBeenCalledWith(users)
