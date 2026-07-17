@@ -6,6 +6,7 @@ import { User } from './entities/user.entity'
 import { BatchDeleteUsersDto } from './dto/batch-delete-users.dto'
 import { HTTP_CODE_METADATA } from '@nestjs/common/constants'
 import { SUCCESS_MESSAGE_KEY } from '../common/decorators/success-message.decorator'
+import type { RequestWithContext } from '../common/types/request-with-context'
 
 describe('UserController', () => {
   let controller: UserController
@@ -47,6 +48,15 @@ describe('UserController', () => {
 
     await expect(controller.findOne(1)).resolves.toBe(user)
     expect(userService.findOne).toHaveBeenCalledWith(1)
+  })
+
+  it('findCurrentUser 应该使用上下文中的用户 ID 查询当前用户', async () => {
+    const request = { user: { id: 7 } } as RequestWithContext
+    const user = { id: 7, username: 'current-user' } as User
+    userService.findOne.mockResolvedValue(user)
+
+    await expect(controller.findCurrentUser(request)).resolves.toBe(user)
+    expect(userService.findOne).toHaveBeenCalledWith(7)
   })
 
   it('update 应该将更新 DTO 传给 UserService', async () => {

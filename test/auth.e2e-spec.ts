@@ -297,6 +297,40 @@ describe('AuthController (e2e)', () => {
     expect(userService.findAll).toHaveBeenCalledTimes(1)
   })
 
+  it('GET /user/me 应该根据 access token 返回当前用户信息', async () => {
+    const user = {
+      id: 7,
+      username: 'current-user',
+      nickname: '当前用户',
+      email: 'current-user@example.com',
+    }
+    jwtService.verifyAsync.mockResolvedValue({ sub: 7, type: 'access' })
+    userService.findOne.mockResolvedValue(user)
+
+    await request(app.getHttpServer())
+      .get('/api/user/me')
+      .set('Authorization', 'Bearer valid-access-token')
+      .expect(200)
+      .expect({ success: true, data: user, message: '查询成功' })
+
+    expect(userService.findOne).toHaveBeenCalledWith(7)
+  })
+
+  it('GET /user/me 缺少 access token 时不应该查询用户', async () => {
+    await request(app.getHttpServer())
+      .get('/api/user/me')
+      .expect(401)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body).toMatchObject({
+          success: false,
+          data: null,
+          message: ResponseMessageEnum.ACCESS_TOKEN_INVALID_OR_EXPIRED,
+        })
+      })
+
+    expect(userService.findOne).not.toHaveBeenCalled()
+  })
+
   afterEach(async () => {
     await app.close()
   })

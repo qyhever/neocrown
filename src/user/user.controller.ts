@@ -9,7 +9,9 @@ import {
   ParseIntPipe,
   HttpCode,
   HttpStatus,
+  Req,
 } from '@nestjs/common'
+import type { RequestWithContext } from '../common/types/request-with-context'
 import { SuccessMessage } from '../common/decorators/success-message.decorator'
 import { BatchDeleteUsersDto } from './dto/batch-delete-users.dto'
 import { UserService } from './user.service'
@@ -29,6 +31,11 @@ export class UserController {
   @Get()
   findAll() {
     return this.userService.findAll()
+  }
+
+  @Get('me')
+  findCurrentUser(@Req() request: RequestWithContext) {
+    return this.userService.findOne(request.user!.id)
   }
 
   @Post('batch-delete')
