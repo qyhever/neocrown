@@ -27,6 +27,21 @@
 
 ## Project setup
 
+邮件验证码和登录功能需要配置以下环境变量（示例值不应直接用于生产环境）：
+
+```dotenv
+POSTAL_SMTP_SERVER=smtp.example.com
+POSTAL_SMTP_PORT=465
+POSTAL_FROM_EMAIL=no-reply@example.com
+POSTAL_FROM_PASS=replace-with-smtp-password
+POSTAL_FROM_NAME=NeoCrown
+EMAIL_VERIFICATION_SECRET=replace-with-an-independent-random-secret-at-least-32-characters
+JWT_SECRET=replace-with-a-strong-random-jwt-secret
+JWT_ACCESS_EXPIRE=10m
+JWT_REFRESH_EXPIRE=7d
+JWT_ISSUER=neocrown
+```
+
 ```bash
 $ pnpm install
 ```

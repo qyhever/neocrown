@@ -18,6 +18,11 @@ const requiredEnvironment = {
   LOG_DATE_PATTERN: 'YYYY-MM-DD',
   LOG_MAX_SIZE: '1m',
   LOG_MAX_FILES: '30d',
+  POSTAL_SMTP_SERVER: 'smtp.example.com',
+  POSTAL_FROM_EMAIL: 'no-reply@example.com',
+  POSTAL_FROM_PASS: 'smtp-password',
+  POSTAL_FROM_NAME: 'NeoCrown',
+  EMAIL_VERIFICATION_SECRET: 'a-secure-test-secret-with-32-characters',
 }
 
 describe('environmentValidationSchema', () => {
@@ -44,6 +49,8 @@ describe('environmentValidationSchema', () => {
       JWT_REFRESH_EXPIRE: '72h',
       JWT_ISSUER: 'neocrown',
       BCRYPT_ROUNDS: 10,
+      LOG_FILE_ENABLED: false,
+      POSTAL_SMTP_PORT: 465,
     })
   })
 
@@ -67,6 +74,37 @@ describe('environmentValidationSchema', () => {
     expect(result.error).toBeUndefined()
     expect(value.DB_PORT).toBe(3307)
     expect(value.DB_SYNC).toBe(true)
+  })
+
+  it('should convert LOG_FILE_ENABLED to a boolean', () => {
+    const result = environmentValidationSchema.validate({
+      ...requiredEnvironment,
+      LOG_FILE_ENABLED: 'false',
+    })
+    const value = result.value as EnvironmentVariables
+
+    expect(result.error).toBeUndefined()
+    expect(value.LOG_FILE_ENABLED).toBe(false)
+  })
+
+  it('should convert POSTAL_SMTP_PORT to a number', () => {
+    const result = environmentValidationSchema.validate({
+      ...requiredEnvironment,
+      POSTAL_SMTP_PORT: '587',
+    })
+    const value = result.value as EnvironmentVariables
+
+    expect(result.error).toBeUndefined()
+    expect(value.POSTAL_SMTP_PORT).toBe(587)
+  })
+
+  it('should reject a short EMAIL_VERIFICATION_SECRET', () => {
+    const { error } = environmentValidationSchema.validate({
+      ...requiredEnvironment,
+      EMAIL_VERIFICATION_SECRET: 'too-short',
+    })
+
+    expect(error).toBeDefined()
   })
 
   it('should convert BCRYPT_ROUNDS to a number', () => {

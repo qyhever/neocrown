@@ -15,9 +15,16 @@ import { AppConfigModule } from './config/config.module'
 import { DatabaseModule } from './database/database.module'
 import { LoggerModule } from './logger/logger.module'
 import { UserModule } from './user/user.module'
+import { AuthModule } from './auth/auth.module'
 
 @Module({
-  imports: [AppConfigModule, DatabaseModule, LoggerModule, UserModule],
+  imports: [
+    AppConfigModule,
+    DatabaseModule,
+    LoggerModule,
+    UserModule,
+    AuthModule,
+  ],
   controllers: [AppController],
   providers: [
     AppService,

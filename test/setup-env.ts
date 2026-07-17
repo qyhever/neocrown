@@ -1,0 +1,11 @@
+process.env.POSTAL_SMTP_SERVER ??= 'smtp.example.com'
+process.env.POSTAL_SMTP_PORT ??= '465'
+process.env.POSTAL_FROM_EMAIL ??= 'no-reply@example.com'
+process.env.POSTAL_FROM_PASS ??= 'test-smtp-password'
+process.env.POSTAL_FROM_NAME ??= 'NeoCrown Test'
+process.env.EMAIL_VERIFICATION_SECRET ??=
+  'test-verification-secret-at-least-32-characters'
+process.env.JWT_SECRET ??= 'test-jwt-secret'
+process.env.JWT_ACCESS_EXPIRE ??= '10m'
+process.env.JWT_REFRESH_EXPIRE ??= '7d'
+process.env.JWT_ISSUER ??= 'neocrown-test'

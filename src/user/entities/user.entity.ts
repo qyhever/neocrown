@@ -3,7 +3,8 @@ import { Exclude } from 'class-transformer'
 import { BaseEntity } from '../../common/entities/base.entity'
 
 @Entity({ name: 'user' })
-@Index('idx_username', ['username'])
+@Index('uk_user_username', ['username'], { unique: true })
+@Index('uk_user_email', ['email'], { unique: true })
 export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 50 })
   username!: string

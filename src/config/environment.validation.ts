@@ -2,6 +2,8 @@ import * as Joi from 'joi'
 
 export type NodeEnvironment = 'development' | 'test' | 'production'
 export type DatabaseType = 'mysql' | 'postgres'
+export type JwtExpiration =
+  `${number}${'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'y'}`
 
 export interface EnvironmentVariables {
   NODE_ENV: NodeEnvironment
@@ -14,8 +16,8 @@ export interface EnvironmentVariables {
   DB_PASSWORD: string
   DB_SYNC: boolean
   JWT_SECRET: string
-  JWT_ACCESS_EXPIRE: string
-  JWT_REFRESH_EXPIRE: string
+  JWT_ACCESS_EXPIRE: JwtExpiration
+  JWT_REFRESH_EXPIRE: JwtExpiration
   JWT_ISSUER: string
   BCRYPT_ROUNDS: number
   LOG_FILE_ENABLED: boolean
@@ -24,6 +26,12 @@ export interface EnvironmentVariables {
   LOG_DATE_PATTERN: string
   LOG_MAX_SIZE: string
   LOG_MAX_FILES: string
+  POSTAL_SMTP_SERVER: string
+  POSTAL_SMTP_PORT: number
+  POSTAL_FROM_EMAIL: string
+  POSTAL_FROM_PASS: string
+  POSTAL_FROM_NAME: string
+  EMAIL_VERIFICATION_SECRET: string
 }
 
 export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
@@ -53,4 +61,10 @@ export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
   LOG_DATE_PATTERN: Joi.string().min(1).required(),
   LOG_MAX_SIZE: Joi.string().min(1).required(),
   LOG_MAX_FILES: Joi.string().min(1).required(),
+  POSTAL_SMTP_SERVER: Joi.string().hostname().required(),
+  POSTAL_SMTP_PORT: Joi.number().port().default(465),
+  POSTAL_FROM_EMAIL: Joi.string().email().required(),
+  POSTAL_FROM_PASS: Joi.string().min(1).required(),
+  POSTAL_FROM_NAME: Joi.string().min(1).required(),
+  EMAIL_VERIFICATION_SECRET: Joi.string().min(32).required(),
 })
