@@ -5,6 +5,9 @@ import {
   ValidationPipe,
 } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
+import { ConfigService } from '@nestjs/config'
+import { APP_GUARD } from '@nestjs/core'
+import { JwtService } from '@nestjs/jwt'
 import request from 'supertest'
 import { App } from 'supertest/types'
 import { AuthController } from '../src/auth/auth.controller'
@@ -13,6 +16,9 @@ import { VerificationCodeService } from '../src/auth/verification-code.service'
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor'
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter'
 import { ResponseMessageEnum } from '../src/common/enums/response-message.enum'
+import { AccessTokenGuard } from '../src/auth/guards/access-token.guard'
+import { UserController } from '../src/user/user.controller'
+import { UserService } from '../src/user/user.service'
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>
@@ -22,17 +28,33 @@ describe('AuthController (e2e)', () => {
     register: jest.fn(),
   }
   const verificationCodeService = { sendRegistrationCode: jest.fn() }
+  const jwtService = { verifyAsync: jest.fn() }
+  const userService = {
+    batchDelete: jest.fn(),
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    remove: jest.fn(),
+    update: jest.fn(),
+  }
 
   beforeEach(async () => {
     jest.clearAllMocks()
     const module = await Test.createTestingModule({
-      controllers: [AuthController],
+      controllers: [AuthController, UserController],
       providers: [
         { provide: AuthService, useValue: authService },
         {
           provide: VerificationCodeService,
           useValue: verificationCodeService,
         },
+        { provide: JwtService, useValue: jwtService },
+        {
+          provide: ConfigService,
+          useValue: { get: jest.fn().mockReturnValue('neocrown-test') },
+        },
+        { provide: UserService, useValue: userService },
+        { provide: APP_GUARD, useClass: AccessTokenGuard },
       ],
     }).compile()
 
@@ -242,6 +264,37 @@ describe('AuthController (e2e)', () => {
           message: ResponseMessageEnum.USER_DISABLED,
         })
       })
+  })
+
+  it('GET /user 缺少 access token 应该返回统一 HTTP 401 响应', async () => {
+    await request(app.getHttpServer())
+      .get('/api/user')
+      .expect(401)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body).toMatchObject({
+          success: false,
+          data: null,
+          message: ResponseMessageEnum.ACCESS_TOKEN_INVALID_OR_EXPIRED,
+        })
+      })
+
+    expect(userService.findAll).not.toHaveBeenCalled()
+  })
+
+  it('GET /user 携带有效 access token 应该继续执行', async () => {
+    jwtService.verifyAsync.mockResolvedValue({ sub: 7, type: 'access' })
+    userService.findAll.mockResolvedValue([])
+
+    await request(app.getHttpServer())
+      .get('/api/user')
+      .set('Authorization', 'Bearer valid-access-token')
+      .expect(200)
+      .expect({ success: true, data: [], message: '查询成功' })
+
+    expect(jwtService.verifyAsync).toHaveBeenCalledWith('valid-access-token', {
+      issuer: 'neocrown-test',
+    })
+    expect(userService.findAll).toHaveBeenCalledTimes(1)
   })
 
   afterEach(async () => {

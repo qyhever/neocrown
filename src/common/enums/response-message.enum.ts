@@ -1,4 +1,5 @@
 export enum ResponseMessageEnum {
+  ACCESS_TOKEN_INVALID_OR_EXPIRED = '访问令牌无效或已过期',
   LOGIN_SUCCESS = '登录成功',
   REFRESH_TOKEN_SUCCESS = '刷新令牌成功',
   REFRESH_TOKEN_INVALID_OR_EXPIRED = '刷新令牌无效或已过期',

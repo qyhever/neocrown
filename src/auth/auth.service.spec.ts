@@ -281,7 +281,7 @@ describe('AuthService', () => {
     verificationCodeService.verifyRegistrationCode.mockResolvedValue(codeRecord)
     userService.createRegistrationUser.mockResolvedValue(user)
 
-    await expect(service.register(dto)).resolves.toBe(user)
+    await expect(service.register(dto)).resolves.toBeNull()
     expect(userService.createRegistrationUser).toHaveBeenCalledWith(
       expect.objectContaining({ email: 'user@example.com' }),
       manager,
@@ -336,7 +336,7 @@ describe('AuthService', () => {
       .mockResolvedValueOnce({ error: true, message: '验证码无效或已过期' })
     userService.createRegistrationUser.mockResolvedValue(user)
 
-    await expect(service.register(dto)).resolves.toBe(user)
+    await expect(service.register(dto)).resolves.toBeNull()
     await expect(service.register(dto)).resolves.toEqual({
       error: true,
       message: '验证码无效或已过期',

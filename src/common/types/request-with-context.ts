@@ -1,7 +1,7 @@
 import type { Request } from 'express'
 
 interface RequestUser {
-  id?: string | number
+  id: number
 }
 
 export interface RequestWithContext extends Request {

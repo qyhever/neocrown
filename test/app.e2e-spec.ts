@@ -24,6 +24,10 @@ describe('AppController (e2e)', () => {
     })
   })
 
+  it('/meta (GET)', () => {
+    return request(app.getHttpServer()).get('/meta').expect(200)
+  })
+
   afterEach(async () => {
     await app.close()
   })

@@ -1,5 +1,6 @@
 import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common'
 import { SuccessMessage } from '../common/decorators/success-message.decorator'
+import { Public } from '../common/decorators/public.decorator'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import { AuthService } from './auth.service'
 import { LoginDto } from './dto/login.dto'
@@ -16,16 +17,19 @@ export class AuthController {
   ) {}
 
   @Post('registration-code')
+  @Public()
   sendRegistrationCode(@Body() dto: SendRegistrationCodeDto) {
     return this.verificationCodeService.sendRegistrationCode(dto.email)
   }
 
   @Post('register')
+  @Public()
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto)
   }
 
   @Post('login')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @SuccessMessage(ResponseMessageEnum.LOGIN_SUCCESS)
   login(@Body() dto: LoginDto) {
@@ -33,6 +37,7 @@ export class AuthController {
   }
 
   @Post('refresh')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @SuccessMessage(ResponseMessageEnum.REFRESH_TOKEN_SUCCESS)
   refresh(@Body() dto: RefreshTokenDto) {

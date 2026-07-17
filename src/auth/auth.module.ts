@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { ConfigService } from '@nestjs/config'
 import { JwtModule } from '@nestjs/jwt'
+import { APP_GUARD } from '@nestjs/core'
 import type { EnvironmentVariables } from '../config/environment.validation'
 import { MailModule } from '../mail/mail.module'
 import { UserModule } from '../user/user.module'
@@ -11,6 +12,7 @@ import { EmailVerificationCode } from './entities/email-verification-code.entity
 import { TypeOrmVerificationCodeRepository } from './repositories/typeorm-verification-code.repository'
 import { VerificationCodeRepository } from './repositories/verification-code.repository'
 import { VerificationCodeService } from './verification-code.service'
+import { AccessTokenGuard } from './guards/access-token.guard'
 
 @Module({
   imports: [
@@ -33,6 +35,10 @@ import { VerificationCodeService } from './verification-code.service'
   providers: [
     AuthService,
     VerificationCodeService,
+    {
+      provide: APP_GUARD,
+      useClass: AccessTokenGuard,
+    },
     {
       provide: VerificationCodeRepository,
       useClass: TypeOrmVerificationCodeRepository,

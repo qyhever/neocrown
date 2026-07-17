@@ -11,7 +11,6 @@ import { DataSource } from 'typeorm'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import type { ServiceErrorResult } from '../common/interceptors/response.interceptor'
 import type { EnvironmentVariables } from '../config/environment.validation'
-import { User } from '../user/entities/user.entity'
 import { UserService } from '../user/user.service'
 import { RegisterDto } from './dto/register.dto'
 import { LoginDto } from './dto/login.dto'
@@ -130,7 +129,7 @@ export class AuthService {
     )
   }
 
-  async register(dto: RegisterDto): Promise<User | ServiceErrorResult> {
+  async register(dto: RegisterDto): Promise<null | ServiceErrorResult> {
     const email = this.verificationCodeService.normalizeEmail(dto.email)
 
     try {
@@ -160,7 +159,7 @@ export class AuthService {
           )
         if ('error' in verificationCode) return verificationCode
 
-        const user = await this.userService.createRegistrationUser(
+        await this.userService.createRegistrationUser(
           {
             username: dto.username,
             nickname: dto.nickname,
@@ -170,7 +169,7 @@ export class AuthService {
           manager,
         )
         await this.verificationCodeService.consume(verificationCode, manager)
-        return user
+        return null
       })
     } catch (error) {
       const databaseError = error as { code?: string; message?: string }
