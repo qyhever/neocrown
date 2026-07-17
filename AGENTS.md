@@ -29,4 +29,4 @@
 
 ## 安全与配置
 
-切勿提交 `.env` 文件中的密钥。新增环境变量时，应补充文档，在 `src/config/environment.validation.ts` 中进行校验，并另行提供安全的示例值。SQL 和 Docker 变更会影响持久化数据及生产环境启动流程，必须仔细审查。
+切勿提交 `.env.*` 文件中的密钥。新增环境变量时，应补充文档，在 `src/config/environment.validation.ts` 中进行校验，并另行提供安全的示例值。SQL 和 Docker 变更会影响持久化数据及生产环境启动流程，必须仔细审查。
