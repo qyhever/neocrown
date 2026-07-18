@@ -7,6 +7,8 @@ import type { ServiceErrorResult } from '../common/interceptors/response.interce
 import type { EnvironmentVariables } from '../config/environment.validation'
 import { CreateUserDto } from './dto/create-user.dto'
 import { BatchDeleteUsersDto } from './dto/batch-delete-users.dto'
+import { FindUsersPageDto } from './dto/find-users-page.dto'
+import { UserPageResultDto } from './dto/user-page-result.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
 import { UserRepository } from './repositories/user.repository'
@@ -87,6 +89,32 @@ export class UserService {
 
   findAll(): Promise<User[]> {
     return this.userRepository.findAll()
+  }
+
+  async findPage(query: FindUsersPageDto): Promise<UserPageResultDto> {
+    console.log('service query: ', query)
+    const normalizedQuery: FindUsersPageDto = {
+      currentPage: query.currentPage ?? 1,
+      pageSize: query.pageSize ?? 10,
+      sortField: query.sortField ?? 'createdAt',
+      sortValue: query.sortValue ?? 'desc',
+      username: query.username,
+      email: query.email,
+      nickname: query.nickname,
+      dataType:
+        query.rangeDate?.length && !query.dataType
+          ? 'createdAt'
+          : query.dataType,
+      rangeDate: query.rangeDate ?? [],
+    }
+    const { list, total } = await this.userRepository.findPage(normalizedQuery)
+
+    return {
+      list,
+      total,
+      currentPage: normalizedQuery.currentPage,
+      pageSize: normalizedQuery.pageSize,
+    }
   }
 
   async findOne(id: number): Promise<User | ServiceErrorResult> {

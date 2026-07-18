@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { compare, getRounds } from 'bcryptjs'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import { CreateUserDto } from './dto/create-user.dto'
+import { FindUsersPageDto } from './dto/find-users-page.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
 import { UserRepository } from './repositories/user.repository'
@@ -22,6 +23,7 @@ describe('UserService', () => {
       existsByEmail: jest.fn(),
       existsByUsername: jest.fn(),
       findAll: jest.fn(),
+      findPage: jest.fn(),
       findLoginUserByEmail: jest.fn(),
       findById: jest.fn(),
       findByIds: jest.fn(),
@@ -134,6 +136,69 @@ describe('UserService', () => {
 
       await expect(service.findAll()).resolves.toEqual(users)
       expect(userRepository.findAll).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('findPage', () => {
+    it('应该归一化默认参数并返回分页结果', async () => {
+      const users = [{ id: 1, username: 'admin' }] as User[]
+      userRepository.findPage.mockResolvedValue({ list: users, total: 1 })
+
+      await expect(service.findPage({} as FindUsersPageDto)).resolves.toEqual({
+        list: users,
+        total: 1,
+        currentPage: 1,
+        pageSize: 10,
+      })
+      expect(userRepository.findPage).toHaveBeenCalledWith({
+        currentPage: 1,
+        pageSize: 10,
+        sortField: 'createdAt',
+        sortValue: 'desc',
+        username: undefined,
+        email: undefined,
+        nickname: undefined,
+        dataType: undefined,
+        rangeDate: [],
+      })
+    })
+
+    it('rangeDate 为空数组时不应该补充日期过滤字段', async () => {
+      userRepository.findPage.mockResolvedValue({ list: [], total: 0 })
+
+      await service.findPage({
+        currentPage: 2,
+        pageSize: 20,
+        sortField: 'updatedAt',
+        sortValue: 'asc',
+        rangeDate: [],
+      })
+
+      expect(userRepository.findPage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dataType: undefined,
+          rangeDate: [],
+        }),
+      )
+    })
+
+    it('rangeDate 有值且未传 dataType 时应该默认按 createdAt 过滤', async () => {
+      userRepository.findPage.mockResolvedValue({ list: [], total: 0 })
+
+      await service.findPage({
+        currentPage: 1,
+        pageSize: 10,
+        sortField: 'createdAt',
+        sortValue: 'desc',
+        rangeDate: ['2026-07-01 00:00:00', '2026-07-31 23:59:59'],
+      })
+
+      expect(userRepository.findPage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          dataType: 'createdAt',
+          rangeDate: ['2026-07-01 00:00:00', '2026-07-31 23:59:59'],
+        }),
+      )
     })
   })
 

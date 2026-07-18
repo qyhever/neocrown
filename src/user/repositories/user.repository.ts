@@ -1,5 +1,11 @@
 import { User } from '../entities/user.entity'
 import type { EntityManager } from 'typeorm'
+import type { FindUsersPageDto } from '../dto/find-users-page.dto'
+
+export interface UserPageQueryResult {
+  list: User[]
+  total: number
+}
 
 export abstract class UserRepository {
   abstract existsByUsername(
@@ -19,6 +25,8 @@ export abstract class UserRepository {
   abstract save(user: User, manager?: EntityManager): Promise<User>
 
   abstract findAll(): Promise<User[]>
+
+  abstract findPage(query: FindUsersPageDto): Promise<UserPageQueryResult>
 
   abstract findById(id: number): Promise<User | null>
 

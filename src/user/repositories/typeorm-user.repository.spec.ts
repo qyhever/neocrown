@@ -8,6 +8,7 @@ type TypeOrmRepositoryMock = {
   [
     Method in
       | 'create'
+      | 'createQueryBuilder'
       | 'existsBy'
       | 'find'
       | 'findBy'
@@ -25,6 +26,7 @@ describe('TypeOrmUserRepository', () => {
   beforeEach(async () => {
     typeOrmRepository = {
       create: jest.fn(),
+      createQueryBuilder: jest.fn(),
       existsBy: jest.fn(),
       find: jest.fn(),
       findBy: jest.fn(),
@@ -102,6 +104,81 @@ describe('TypeOrmUserRepository', () => {
 
     await expect(repository.findAll()).resolves.toBe(users)
     expect(typeOrmRepository.find).toHaveBeenCalledTimes(1)
+  })
+
+  it('应该按分页、排序、模糊条件和日期范围查询用户', async () => {
+    const users = [{ id: 1, username: 'admin' }] as User[]
+    const queryBuilder = {
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn().mockResolvedValue([users, 1]),
+    }
+    typeOrmRepository.createQueryBuilder.mockReturnValue(queryBuilder as never)
+
+    await expect(
+      repository.findPage({
+        currentPage: 2,
+        pageSize: 20,
+        sortField: 'updatedAt',
+        sortValue: 'asc',
+        username: 'admin',
+        email: 'example.com',
+        nickname: '管理',
+        dataType: 'updatedAt',
+        rangeDate: ['2026-07-01 00:00:00', '2026-07-31 23:59:59'],
+      }),
+    ).resolves.toEqual({ list: users, total: 1 })
+
+    expect(typeOrmRepository.createQueryBuilder).toHaveBeenCalledWith('user')
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'user.username LIKE :username',
+      { username: '%admin%' },
+    )
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'user.email LIKE :email',
+      { email: '%example.com%' },
+    )
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'user.nickname LIKE :nickname',
+      { nickname: '%管理%' },
+    )
+    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
+      'user.updatedAt BETWEEN :startDate AND :endDate',
+      {
+        startDate: '2026-07-01 00:00:00',
+        endDate: '2026-07-31 23:59:59',
+      },
+    )
+    expect(queryBuilder.orderBy).toHaveBeenCalledWith('user.updatedAt', 'ASC')
+    expect(queryBuilder.skip).toHaveBeenCalledWith(20)
+    expect(queryBuilder.take).toHaveBeenCalledWith(20)
+    expect(queryBuilder.getManyAndCount).toHaveBeenCalledTimes(1)
+  })
+
+  it('rangeDate 为空时不应该添加日期范围条件', async () => {
+    const queryBuilder = {
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+    }
+    typeOrmRepository.createQueryBuilder.mockReturnValue(queryBuilder as never)
+
+    await repository.findPage({
+      currentPage: 1,
+      pageSize: 10,
+      sortField: 'createdAt',
+      sortValue: 'desc',
+      rangeDate: [],
+    })
+
+    expect(queryBuilder.andWhere).not.toHaveBeenCalled()
+    expect(queryBuilder.orderBy).toHaveBeenCalledWith('user.createdAt', 'DESC')
+    expect(queryBuilder.skip).toHaveBeenCalledWith(0)
+    expect(queryBuilder.take).toHaveBeenCalledWith(10)
   })
 
   it('应该按 ID 查询单个用户', async () => {

@@ -23,9 +23,11 @@ import { SuccessMessage } from '../common/decorators/success-message.decorator'
 import { BatchDeleteUsersDto } from './dto/batch-delete-users.dto'
 import { UserService } from './user.service'
 import { CreateUserDto } from './dto/create-user.dto'
+import { FindUsersPageDto } from './dto/find-users-page.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
 import { BatchDeleteUsersResultDto } from './dto/batch-delete-users-result.dto'
+import { UserPageResultDto } from './dto/user-page-result.dto'
 
 @ApiTags('用户')
 @ApiBearerAuth()
@@ -61,6 +63,22 @@ export class UserController {
   })
   findAll() {
     return this.userService.findAll()
+  }
+
+  @Post('page')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: '分页查询用户列表',
+    description: '按分页、排序、模糊条件和日期范围查询未删除用户',
+  })
+  @ApiWrappedOkResponse({
+    description: '分页查询用户列表成功',
+    message: '查询成功',
+    data: { model: UserPageResultDto },
+  })
+  @ApiValidationErrorResponse()
+  findPage(@Body() query: FindUsersPageDto) {
+    return this.userService.findPage(query)
   }
 
   @Get('me')

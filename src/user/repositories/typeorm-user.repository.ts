@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { EntityManager, In, Repository } from 'typeorm'
+import type { FindUsersPageDto } from '../dto/find-users-page.dto'
 import { User } from '../entities/user.entity'
-import { UserRepository } from './user.repository'
+import { UserPageQueryResult, UserRepository } from './user.repository'
 
 @Injectable()
 export class TypeOrmUserRepository implements UserRepository {
@@ -39,6 +40,51 @@ export class TypeOrmUserRepository implements UserRepository {
 
   findAll(): Promise<User[]> {
     return this.repository.find()
+  }
+
+  async findPage(query: FindUsersPageDto): Promise<UserPageQueryResult> {
+    const queryBuilder = this.repository.createQueryBuilder('user')
+
+    if (query.username) {
+      queryBuilder.andWhere('user.username LIKE :username', {
+        username: `%${query.username}%`,
+      })
+    }
+
+    if (query.email) {
+      queryBuilder.andWhere('user.email LIKE :email', {
+        email: `%${query.email}%`,
+      })
+    }
+
+    if (query.nickname) {
+      queryBuilder.andWhere('user.nickname LIKE :nickname', {
+        nickname: `%${query.nickname}%`,
+      })
+    }
+
+    if (query.rangeDate.length > 0) {
+      const [startDate, endDate] = query.rangeDate
+      const dataType = query.dataType ?? 'createdAt'
+      queryBuilder.andWhere(
+        `user.${dataType} BETWEEN :startDate AND :endDate`,
+        {
+          startDate,
+          endDate,
+        },
+      )
+    }
+
+    const [list, total] = await queryBuilder
+      .orderBy(
+        `user.${query.sortField}`,
+        query.sortValue.toUpperCase() as 'ASC' | 'DESC',
+      )
+      .skip((query.currentPage - 1) * query.pageSize)
+      .take(query.pageSize)
+      .getManyAndCount()
+
+    return { list, total }
   }
 
   findById(id: number): Promise<User | null> {
