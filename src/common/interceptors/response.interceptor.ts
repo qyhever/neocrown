@@ -8,14 +8,6 @@ import { Reflector } from '@nestjs/core'
 import { Observable, map } from 'rxjs'
 import { SUCCESS_MESSAGE_KEY } from '../decorators/success-message.decorator'
 
-const SUCCESS_MESSAGES: Record<string, string> = {
-  GET: '查询成功',
-  POST: '创建成功',
-  PUT: '更新成功',
-  PATCH: '更新成功',
-  DELETE: '删除成功',
-}
-
 export interface ApiResponse<T> {
   success: boolean
   data: T | null
@@ -73,12 +65,6 @@ export class ResponseInterceptor implements NestInterceptor<
       context.getHandler(),
     )
 
-    if (customMessage) {
-      return customMessage
-    }
-
-    const request = context.switchToHttp().getRequest<{ method?: string }>()
-
-    return SUCCESS_MESSAGES[request.method ?? ''] ?? '操作成功'
+    return customMessage ?? '请求成功'
   }
 }

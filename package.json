@@ -43,6 +43,7 @@
     "joi": "^18.2.3",
     "mysql2": "^3.23.0",
     "nest-winston": "^1.10.2",
+    "nestjs-knife4j-plus": "^1.0.9",
     "nodemailer": "^9.0.3",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",

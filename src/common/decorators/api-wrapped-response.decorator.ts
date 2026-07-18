@@ -33,7 +33,7 @@ const toOpenApiDataSchema = (data: DataSchema): SchemaObject => {
       : modelSchema
   }
 
-  return data as SchemaObject
+  return data
 }
 
 const getExtraModels = (data: DataSchema): Type<unknown>[] => {

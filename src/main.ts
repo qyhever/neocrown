@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { NestFactory, type NestApplication } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
+import { knife4jSetup } from 'nestjs-knife4j-plus'
 import { join } from 'node:path'
 import { AppModule } from './app.module'
 import type { EnvironmentVariables } from './config/environment.validation'
@@ -35,6 +36,17 @@ async function bootstrap() {
     .build()
   const document = SwaggerModule.createDocument(app, swaggerConfig)
   SwaggerModule.setup('/api/docs', app, document)
+  // /api/k4/doc.html
+  await knife4jSetup(
+    app,
+    [
+      {
+        name: 'Neocrown API',
+        url: '../docs-json',
+      },
+    ],
+    '/api/k4',
+  )
 
   await app.listen(configService.get('PORT', { infer: true }))
 }
