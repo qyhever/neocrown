@@ -1,7 +1,7 @@
 @hostname = localhost
 @port = 8300
 @host = {{hostname}}:{{port}}
-@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIxLCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiMjE1Yzg3ZDAtZWY5MS00ODZiLThjMzgtNjZmYWY1NzRlM2ZiIiwiaWF0IjoxNzg0MzQzNjY0LCJleHAiOjE3ODQzNTA4NjQsImlzcyI6Im5lb2Nyb3duIn0.xtvZv8-_2VyHJP74TAEAinbixhaASglomcskTZe7AVA
+@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIxLCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiZTdjNjJiOTItNjg5Yy00MGFmLWFkMTYtOTY0YWYxZDBmMWUzIiwiaWF0IjoxNzg0NDcxMjgyLCJleHAiOjE3ODQ0Nzg0ODIsImlzcyI6Im5lb2Nyb3duIn0.LXM0smyBnLi76GNqSGF7DEujfOCclbaaaN1T02XNJGs
 
 ### app
 get http://{{host}}/api HTTP/1.1
@@ -97,7 +97,7 @@ Authorization: Bearer {{token}}
 Content-Type: application/json
 
 {
-  "currentPage": 1,
+  "currentPage": "1",
   "pageSize": 10,
   "rangeDate": []
 }

@@ -67,7 +67,7 @@ describe('GlobalExceptionFilter', () => {
       }),
     )
     expect(errorSpy).not.toHaveBeenCalled()
-    expect(response.status).toHaveBeenCalledWith(400)
+    expect(response.status).toHaveBeenCalledWith(200)
     expect(response.json).toHaveBeenCalledWith({
       success: false,
       data: null,

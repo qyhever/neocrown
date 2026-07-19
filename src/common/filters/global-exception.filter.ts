@@ -61,13 +61,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
     if (response.headersSent) return
 
+    const responseStatusCode = this.getResponseStatusCode(statusCode)
     const body: ApiResponse<null> & { requestId: string } = {
       success: false,
       data: null,
       message: clientMessage,
       requestId: request.requestId,
     }
-    response.status(statusCode).json(body)
+    response.status(responseStatusCode).json(body)
   }
 
   private createLog(
@@ -96,6 +97,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     return exception instanceof HttpException
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR
+  }
+
+  private getResponseStatusCode(statusCode: HttpStatus): HttpStatus {
+    if (
+      statusCode === HttpStatus.BAD_REQUEST ||
+      statusCode === HttpStatus.UNPROCESSABLE_ENTITY
+    ) {
+      return HttpStatus.OK
+    }
+
+    return statusCode
   }
 
   private getCategory(

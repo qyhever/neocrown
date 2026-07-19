@@ -33,6 +33,7 @@ describe('AuthController (e2e)', () => {
     batchDelete: jest.fn(),
     create: jest.fn(),
     findAll: jest.fn(),
+    findPage: jest.fn(),
     findOne: jest.fn(),
     remove: jest.fn(),
     update: jest.fn(),
@@ -115,7 +116,10 @@ describe('AuthController (e2e)', () => {
         verificationCode: '123456',
         isEnabled: false,
       })
-      .expect(400)
+      .expect(200)
+      .expect(({ body }: { body: { success: boolean } }) => {
+        expect(body.success).toBe(false)
+      })
 
     expect(authService.register).not.toHaveBeenCalled()
   })
@@ -153,7 +157,10 @@ describe('AuthController (e2e)', () => {
         password: '',
         username: 'unexpected',
       })
-      .expect(400)
+      .expect(200)
+      .expect(({ body }: { body: { success: boolean } }) => {
+        expect(body.success).toBe(false)
+      })
 
     expect(authService.login).not.toHaveBeenCalled()
   })
@@ -223,9 +230,34 @@ describe('AuthController (e2e)', () => {
     await request(app.getHttpServer())
       .post('/api/auth/refresh')
       .send(body)
-      .expect(400)
+      .expect(200)
+      .expect(({ body }: { body: { success: boolean } }) => {
+        expect(body.success).toBe(false)
+      })
 
     expect(authService.refresh).not.toHaveBeenCalled()
+  })
+
+  it('POST /user/page 参数校验失败时应该返回 HTTP 200 失败响应', async () => {
+    jwtService.verifyAsync.mockResolvedValue({ sub: 7, type: 'access' })
+
+    await request(app.getHttpServer())
+      .post('/api/user/page')
+      .set('Authorization', 'Bearer valid-access-token')
+      .send({
+        currentPage: '1',
+        pageSize: 10,
+        rangeDate: [],
+      })
+      .expect(200)
+      .expect(({ body }: { body: Record<string, unknown> }) => {
+        expect(body).toMatchObject({
+          success: false,
+          data: null,
+        })
+      })
+
+    expect(userService.findPage).not.toHaveBeenCalled()
   })
 
   it('POST /auth/refresh 无效令牌应该返回 HTTP 401', async () => {
