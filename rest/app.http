@@ -1,0 +1,11 @@
+@hostname = localhost
+@port = 8300
+@host = {{hostname}}:{{port}}
+@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIxLCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiZTdjNjJiOTItNjg5Yy00MGFmLWFkMTYtOTY0YWYxZDBmMWUzIiwiaWF0IjoxNzg0NDcxMjgyLCJleHAiOjE3ODQ0Nzg0ODIsImlzcyI6Im5lb2Nyb3duIn0.LXM0smyBnLi76GNqSGF7DEujfOCclbaaaN1T02XNJGs
+
+### app
+get http://{{host}}/api HTTP/1.1
+Content-Type: application/json
+
+### meta
+get http://{{host}}/api/meta HTTP/1.1

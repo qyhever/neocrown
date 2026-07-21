@@ -1,0 +1,46 @@
+@hostname = localhost
+@port = 8300
+@host = {{hostname}}:{{port}}
+@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIxLCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiODJhYjQ4MTUtYjk1Yy00ODEyLTk4YmItOGVjZmMzNzhhY2NlIiwiaWF0IjoxNzg0NjQxNzc1LCJleHAiOjE3ODQ2NDg5NzUsImlzcyI6Im5lb2Nyb3duIn0.xERofmTHE9zn84EXGRpi2bUKpt85odLTDLWgR9INqSc
+
+
+### send registration verification code
+post http://{{host}}/api/auth/registration-code HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "buneo@6688988.xyz"
+}
+
+### register with verification code
+post http://{{host}}/api/auth/register HTTP/1.1
+Content-Type: application/json
+
+{
+  "username": "new-user1",
+  "nickname": "New User1",
+  "email": "buneo@6688988.xyz",
+  "password": "password123",
+  "verificationCode": "160304"
+}
+
+### login
+post http://{{host}}/api/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+  "email": "buneo@6688988.xyz",
+  "password": "password123"
+}
+
+### refresh tokens
+post http://{{host}}/api/auth/refresh HTTP/1.1
+Content-Type: application/json
+
+{
+  "refreshToken": "replace-with-refresh-token"
+}
+
+### current user
+get http://{{host}}/api/user/me HTTP/1.1
+Authorization: Bearer {{token}}
