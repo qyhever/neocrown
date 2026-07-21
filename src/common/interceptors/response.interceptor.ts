@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core'
 import { Observable, map } from 'rxjs'
 import { SUCCESS_MESSAGE_KEY } from '../decorators/success-message.decorator'
+import { SKIP_RESPONSE_WRAP_KEY } from '../decorators/skip-response-wrap.decorator'
 
 export interface ApiResponse<T> {
   success: boolean
@@ -30,16 +31,16 @@ function isServiceErrorResult(value: unknown): value is ServiceErrorResult {
 }
 
 @Injectable()
-export class ResponseInterceptor implements NestInterceptor<
-  unknown,
-  ApiResponse<unknown>
-> {
+export class ResponseInterceptor implements NestInterceptor<unknown, unknown> {
   constructor(private readonly reflector: Reflector = new Reflector()) {}
 
   intercept(
     context: ExecutionContext,
     next: CallHandler<unknown>,
-  ): Observable<ApiResponse<unknown>> {
+  ): Observable<unknown> {
+    if (this.getSkipResponseWrap(context)) {
+      return next.handle()
+    }
     return next.handle().pipe(
       map((data) => {
         if (isServiceErrorResult(data)) {
@@ -66,5 +67,14 @@ export class ResponseInterceptor implements NestInterceptor<
     )
 
     return customMessage ?? '请求成功'
+  }
+
+  private getSkipResponseWrap(context: ExecutionContext): boolean {
+    return (
+      this.reflector.getAllAndOverride<boolean>(SKIP_RESPONSE_WRAP_KEY, [
+        context.getHandler(),
+        context.getClass(),
+      ]) ?? false
+    )
   }
 }

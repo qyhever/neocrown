@@ -3,10 +3,12 @@ import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { AppService } from './app.service'
 import { Public } from './common/decorators/public.decorator'
 import { ApiWrappedOkResponse } from './common/decorators/api-wrapped-response.decorator'
+import { SkipResponseWrap } from './common/decorators/skip-response-wrap.decorator'
 
 @ApiTags('应用')
 @Controller()
 @Public()
+@SkipResponseWrap()
 export class AppController {
   constructor(private readonly appService: AppService) {}
 
