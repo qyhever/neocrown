@@ -1,7 +1,14 @@
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import nodemailer, { type Transporter } from 'nodemailer'
 import type { EnvironmentVariables } from '../config/environment.validation'
+
+const verificationCodeHtmlTemplate = readFileSync(
+  join(__dirname, 'templates', 'verification-code.html'),
+  'utf8',
+)
 
 @Injectable()
 export class MailService {
@@ -38,7 +45,16 @@ export class MailService {
       to: email,
       subject: '注册邮箱验证码',
       text: `您的注册验证码是 ${code}，${validMinutes} 分钟内有效。请勿将验证码告知他人。`,
-      html: `<p>您的注册验证码是 <strong>${code}</strong>，${validMinutes} 分钟内有效。</p><p>请勿将验证码告知他人。</p>`,
+      html: this.renderVerificationCodeHtml(code, validMinutes),
     })
+  }
+
+  private renderVerificationCodeHtml(
+    code: string,
+    validMinutes: number,
+  ): string {
+    return verificationCodeHtmlTemplate
+      .replace('{{CODE}}', code)
+      .replace('{{VALID_MINUTES}}', validMinutes.toString())
   }
 }
