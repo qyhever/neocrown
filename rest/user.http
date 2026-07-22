@@ -1,7 +1,7 @@
 @hostname = localhost
 @port = 8300
 @host = {{hostname}}:{{port}}
-@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIxLCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiMzUxZjFjZjctYTY2NS00YThhLWFjN2MtNTQ5MzNhM2UyOGRiIiwiaWF0IjoxNzg0NjQxODY5LCJleHAiOjE3ODQ2NDkwNjksImlzcyI6Im5lb2Nyb3duIn0.ubPRmtU8IJJtb1_WxQMwU36WCykHaTUmRdD8rktuEk8
+@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjczLCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiMjZiMTU3YmUtYzE4MC00ZGU5LTk2OWYtYTlkODI1NDg1OWQ5IiwiaWF0IjoxNzg0NzE0NTM3LCJleHAiOjE3ODQ4MDA5MzcsImlzcyI6Im5lb2Nyb3duIn0.1N6DOcwqRaJ4zVmJLTj7DxCrQgXYPaVlPZsUDim_YYw
 
 
 ### user list
@@ -19,6 +19,7 @@ Authorization: Bearer {{token}}
 ### user create（临时兼容入口：可绕过邮箱验证，待废弃）
 post http://{{host}}/api/user HTTP/1.1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "username": "testuser",

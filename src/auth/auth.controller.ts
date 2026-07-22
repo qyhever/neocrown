@@ -33,7 +33,7 @@ export class AuthController {
   })
   @ApiWrappedCreatedResponse({
     description: '验证码发送请求已处理',
-    message: '创建成功',
+    message: '请求成功',
     data: { type: 'null' },
   })
   @ApiValidationErrorResponse()
@@ -50,7 +50,7 @@ export class AuthController {
   })
   @ApiWrappedCreatedResponse({
     description: '注册请求已处理',
-    message: '创建成功',
+    message: '请求成功',
     data: { type: 'null' },
   })
   @ApiValidationErrorResponse()

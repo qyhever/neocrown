@@ -139,7 +139,7 @@ export class UserService {
 
   async update(
     updateUserDto: UpdateUserDto,
-  ): Promise<User | ServiceErrorResult> {
+  ): Promise<null | ServiceErrorResult> {
     const user = await this.userRepository.findById(updateUserDto.id)
 
     if (!user || user.deletedAt) {
@@ -210,13 +210,14 @@ export class UserService {
     }
 
     if (!changed) {
-      return user
+      return null
     }
 
-    return this.userRepository.save(user)
+    await this.userRepository.save(user)
+    return null
   }
 
-  async remove(id: number): Promise<User | ServiceErrorResult> {
+  async remove(id: number): Promise<null | ServiceErrorResult> {
     const user = await this.userRepository.findById(id)
 
     if (!user || user.deletedAt) {
@@ -233,7 +234,8 @@ export class UserService {
       }
     }
 
-    return this.userRepository.softRemove(user)
+    await this.userRepository.softRemove(user)
+    return null
   }
 
   async batchDelete(

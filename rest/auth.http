@@ -29,8 +29,8 @@ post http://{{host}}/api/auth/login HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "buneo@6688988.xyz",
-  "password": "password123"
+  "email": "testuser@example.xyz",
+  "password": "testuser123"
 }
 
 ### refresh tokens

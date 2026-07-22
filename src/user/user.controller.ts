@@ -15,8 +15,6 @@ import { ApiBearerAuth, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger'
 import type { RequestWithContext } from '../common/types/request-with-context'
 import {
   ApiAccessTokenErrorResponse,
-  ApiValidationErrorResponse,
-  ApiWrappedCreatedResponse,
   ApiWrappedOkResponse,
 } from '../common/decorators/api-wrapped-response.decorator'
 import { SuccessMessage } from '../common/decorators/success-message.decorator'
@@ -42,14 +40,12 @@ export class UserController {
     summary: '创建用户（已废弃）',
     description:
       '临时兼容入口，可绕过邮箱验证。新注册流程请使用 POST /auth/register',
-    deprecated: true,
   })
-  @ApiWrappedCreatedResponse({
+  @ApiWrappedOkResponse({
     description: '创建用户请求已处理',
     message: '创建成功',
     data: { model: User },
   })
-  @ApiValidationErrorResponse()
   create(@Body() createUserDto: CreateUserDto) {
     return this.userService.create(createUserDto)
   }
@@ -76,7 +72,6 @@ export class UserController {
     message: '查询成功',
     data: { model: UserPageResultDto },
   })
-  @ApiValidationErrorResponse()
   findPage(@Body() query: FindUsersPageDto) {
     return this.userService.findPage(query)
   }
@@ -107,7 +102,6 @@ export class UserController {
     message: '删除成功',
     data: { model: BatchDeleteUsersResultDto },
   })
-  @ApiValidationErrorResponse()
   batchDelete(@Body() batchDeleteUsersDto: BatchDeleteUsersDto) {
     return this.userService.batchDelete(batchDeleteUsersDto)
   }
@@ -123,7 +117,6 @@ export class UserController {
     message: '查询成功',
     data: { model: User },
   })
-  @ApiValidationErrorResponse()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.userService.findOne(id)
   }
@@ -137,9 +130,8 @@ export class UserController {
   @ApiWrappedOkResponse({
     description: '更新用户请求已处理',
     message: '更新成功',
-    data: { model: User },
+    data: { type: null },
   })
-  @ApiValidationErrorResponse()
   update(@Body() updateUserDto: UpdateUserDto) {
     return this.userService.update(updateUserDto)
   }
@@ -154,9 +146,8 @@ export class UserController {
   @ApiWrappedOkResponse({
     description: '删除用户请求已处理',
     message: '删除成功',
-    data: { model: User },
+    data: { type: null },
   })
-  @ApiValidationErrorResponse()
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.userService.remove(id)
   }
