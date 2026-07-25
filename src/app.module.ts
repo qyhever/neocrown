@@ -6,6 +6,7 @@ import {
   type NestModule,
 } from '@nestjs/common'
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core'
+import { ScheduleModule } from '@nestjs/schedule'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { GlobalExceptionFilter } from './common/filters/global-exception.filter'
@@ -23,6 +24,7 @@ import { CrawlerModule } from './crawler/crawler.module'
     AppConfigModule,
     DatabaseModule,
     LoggerModule,
+    ScheduleModule.forRoot(),
     UserModule,
     AuthModule,
     CrawlerModule,
