@@ -2,6 +2,17 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
+  "eslint.workingDirectories": [
+    {
+      "directory": "neocrown-frontend",
+      "changeProcessCWD": true
+    },
+    {
+      "directory": "neocrown-backend",
+      "changeProcessCWD": true
+    }
+  ],
+  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact", "vue"],
   "vue.inlayHints.optionsWrapper": false,
   "files.encoding": "utf8",
   "files.eol": "\n"
