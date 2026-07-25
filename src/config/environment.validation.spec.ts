@@ -52,6 +52,7 @@ describe('environmentValidationSchema', () => {
       BCRYPT_ROUNDS: 10,
       LOG_FILE_ENABLED: false,
       POSTAL_SMTP_PORT: 465,
+      POSTAL_SMTP_TIMEOUT_MS: 10000,
     })
   })
 
@@ -98,6 +99,29 @@ describe('environmentValidationSchema', () => {
     expect(result.error).toBeUndefined()
     expect(value.POSTAL_SMTP_PORT).toBe(587)
   })
+
+  it('should convert POSTAL_SMTP_TIMEOUT_MS to a number', () => {
+    const result = environmentValidationSchema.validate({
+      ...requiredEnvironment,
+      POSTAL_SMTP_TIMEOUT_MS: '5000',
+    })
+    const value = result.value as EnvironmentVariables
+
+    expect(result.error).toBeUndefined()
+    expect(value.POSTAL_SMTP_TIMEOUT_MS).toBe(5000)
+  })
+
+  it.each(['999', '60001', 'invalid'])(
+    'should reject an invalid POSTAL_SMTP_TIMEOUT_MS value: %s',
+    (timeout) => {
+      const { error } = environmentValidationSchema.validate({
+        ...requiredEnvironment,
+        POSTAL_SMTP_TIMEOUT_MS: timeout,
+      })
+
+      expect(error).toBeDefined()
+    },
+  )
 
   it('should reject a short EMAIL_VERIFICATION_SECRET', () => {
     const { error } = environmentValidationSchema.validate({

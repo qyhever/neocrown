@@ -28,6 +28,7 @@ export interface EnvironmentVariables {
   LOG_MAX_FILES: string
   POSTAL_SMTP_SERVER: string
   POSTAL_SMTP_PORT: number
+  POSTAL_SMTP_TIMEOUT_MS: number
   POSTAL_FROM_EMAIL: string
   POSTAL_FROM_PASS: string
   POSTAL_FROM_NAME: string
@@ -64,6 +65,11 @@ export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
   LOG_MAX_FILES: Joi.string().min(1).required(),
   POSTAL_SMTP_SERVER: Joi.string().hostname().required(),
   POSTAL_SMTP_PORT: Joi.number().port().default(465),
+  POSTAL_SMTP_TIMEOUT_MS: Joi.number()
+    .integer()
+    .min(1000)
+    .max(60000)
+    .default(10000),
   POSTAL_FROM_EMAIL: Joi.string().email().required(),
   POSTAL_FROM_PASS: Joi.string().min(1).required(),
   POSTAL_FROM_NAME: Joi.string().min(1).required(),

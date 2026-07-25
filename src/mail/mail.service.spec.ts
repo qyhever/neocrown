@@ -1,5 +1,7 @@
+import { Logger, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import nodemailer from 'nodemailer'
+import { ResponseMessageEnum } from '../common/enums/response-message.enum'
 import type { EnvironmentVariables } from '../config/environment.validation'
 import { MailService } from './mail.service'
 
@@ -8,7 +10,7 @@ type SendMailOptions = {
   to: string
   subject: string
   text: string
-  html: string
+  html?: string
 }
 
 jest.mock('nodemailer', () => ({
@@ -25,6 +27,7 @@ describe('MailService', () => {
   const configValues = new Map<keyof EnvironmentVariables, unknown>([
     ['POSTAL_SMTP_SERVER', 'smtp.example.com'],
     ['POSTAL_SMTP_PORT', 465],
+    ['POSTAL_SMTP_TIMEOUT_MS', 10000],
     ['POSTAL_FROM_EMAIL', 'no-reply@example.com'],
     ['POSTAL_FROM_PASS', 'password'],
     ['POSTAL_FROM_NAME', '明叶同行'],
@@ -115,5 +118,67 @@ describe('MailService', () => {
     expect(html).toContain('TypeScript &amp; NestJS &lt;最佳实践&gt;')
     expect(html).toContain('https://v2ex.example.com/t/123?x=1&amp;y=2')
     expect(html).toContain('2026-07-25T00:01:00.000Z')
+  })
+
+  it('应该使用配置中的发件人发送纯文本邮件', async () => {
+    await service.sendMail(
+      'receiver@example.com',
+      '系统通知',
+      '这是一封测试邮件。',
+    )
+
+    expect(sendMail).toHaveBeenCalledWith({
+      from: '"明叶同行" <no-reply@example.com>',
+      to: 'receiver@example.com',
+      subject: '系统通知',
+      text: '这是一封测试邮件。',
+    })
+  })
+
+  it('应该配置 SMTP 超时时间', () => {
+    expect(nodemailer.createTransport).toHaveBeenCalledWith({
+      host: 'smtp.example.com',
+      port: 465,
+      secure: true,
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+      auth: {
+        user: 'no-reply@example.com',
+        pass: 'password',
+      },
+    })
+  })
+
+  it('SMTP 发送失败时应该返回服务不可用错误', async () => {
+    const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation()
+    sendMail.mockRejectedValueOnce(new Error('Connection timeout'))
+
+    let caughtError: unknown
+    try {
+      await service.sendMail(
+        'receiver@example.com',
+        '系统通知',
+        '这是一封测试邮件。',
+      )
+    } catch (error) {
+      caughtError = error
+    }
+
+    expect(caughtError).toBeInstanceOf(ServiceUnavailableException)
+    expect(caughtError).toMatchObject({
+      response: { message: ResponseMessageEnum.MAIL_SEND_FAILED },
+    })
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'SMTP 邮件发送失败',
+        error: 'Connection timeout',
+        to: 'receiver@example.com',
+        subject: '系统通知',
+      }),
+      expect.any(String),
+    )
+
+    errorSpy.mockRestore()
   })
 })

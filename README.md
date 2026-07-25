@@ -32,6 +32,7 @@
 ```dotenv
 POSTAL_SMTP_SERVER=smtp.example.com
 POSTAL_SMTP_PORT=465
+POSTAL_SMTP_TIMEOUT_MS=10000
 POSTAL_FROM_EMAIL=no-reply@example.com
 POSTAL_FROM_PASS=replace-with-smtp-password
 POSTAL_FROM_NAME=NeoCrown

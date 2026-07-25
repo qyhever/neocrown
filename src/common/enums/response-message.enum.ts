@@ -12,6 +12,7 @@ export enum ResponseMessageEnum {
   SYSTEM_DEFAULT_USER_CANNOT_BE_MODIFIED = '系统默认用户不允许修改',
   SYSTEM_DEFAULT_USER_CANNOT_BE_DELETED = '系统默认用户不允许删除',
   EMAIL_ALREADY_REGISTERED = '邮箱已注册',
+  MAIL_SEND_FAILED = '邮件发送失败，请稍后重试',
   VERIFICATION_CODE_SENT_TOO_FREQUENTLY = '验证码发送过于频繁，请稍后再试',
   VERIFICATION_CODE_EMAIL_SEND_FAILED = '验证码邮件发送失败，请稍后重试',
   VERIFICATION_CODE_INVALID_OR_EXPIRED = '验证码无效或已过期',
