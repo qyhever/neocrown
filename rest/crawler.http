@@ -9,6 +9,11 @@ post http://{{host}}/api/crawler/v2ex/hot-top10/crawl
 Authorization: Bearer {{token}}
 
 
+### crawl v2ex/hot-top10 and send mail
+post http://{{host}}/api/crawler/v2ex/hot-top10/crawl-and-send-mail
+Authorization: Bearer {{token}}
+
+
 ### get v2ex/hot-top10 result
 get http://{{host}}/api/crawler/v2ex/hot-top10/result
 Authorization: Bearer {{token}}

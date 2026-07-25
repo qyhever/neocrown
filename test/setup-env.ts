@@ -5,6 +5,7 @@ process.env.POSTAL_FROM_PASS ??= 'test-smtp-password'
 process.env.POSTAL_FROM_NAME ??= 'NeoCrown Test'
 process.env.EMAIL_VERIFICATION_SECRET ??=
   'test-verification-secret-at-least-32-characters'
+process.env.V2EX_HOT_TOP10_MAIL_TO ??= 'receiver@example.com'
 process.env.JWT_SECRET ??= 'test-jwt-secret'
 process.env.JWT_ACCESS_EXPIRE ??= '10m'
 process.env.JWT_REFRESH_EXPIRE ??= '7d'

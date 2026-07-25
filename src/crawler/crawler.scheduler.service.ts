@@ -1,5 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
 import { Cron } from '@nestjs/schedule'
+import type { EnvironmentVariables } from '../config/environment.validation'
+import { MailService } from '../mail/mail.service'
 import { CrawlerService } from './crawler.service'
 
 const V2EX_HOT_TOP10_CRON = '0 8 * * *'
@@ -10,7 +13,11 @@ const MAX_ATTEMPTS = 4
 export class CrawlerSchedulerService {
   private readonly logger = new Logger(CrawlerSchedulerService.name)
 
-  constructor(private readonly crawlerService: CrawlerService) {}
+  constructor(
+    private readonly crawlerService: CrawlerService,
+    private readonly mailService: MailService,
+    private readonly configService: ConfigService<EnvironmentVariables, true>,
+  ) {}
 
   @Cron(V2EX_HOT_TOP10_CRON, { timeZone: V2EX_HOT_TOP10_TIME_ZONE })
   async crawlV2exHotTop10Daily(): Promise<void> {
@@ -18,7 +25,11 @@ export class CrawlerSchedulerService {
 
     for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
       try {
-        await this.crawlerService.crawlV2exHotTop10()
+        const result = await this.crawlerService.crawlV2exHotTop10()
+        const to = this.configService.get('V2EX_HOT_TOP10_MAIL_TO', {
+          infer: true,
+        })
+        await this.mailService.sendV2exHotTop10(to, result.list)
         this.logger.log(`V2EX 热贴定时抓取成功，尝试次数：${attempt}`)
         return
       } catch (error) {

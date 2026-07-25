@@ -23,6 +23,7 @@ const requiredEnvironment = {
   POSTAL_FROM_PASS: 'smtp-password',
   POSTAL_FROM_NAME: 'NeoCrown',
   EMAIL_VERIFICATION_SECRET: 'a-secure-test-secret-with-32-characters',
+  V2EX_HOT_TOP10_MAIL_TO: 'receiver@example.com',
 }
 
 describe('environmentValidationSchema', () => {
@@ -102,6 +103,15 @@ describe('environmentValidationSchema', () => {
     const { error } = environmentValidationSchema.validate({
       ...requiredEnvironment,
       EMAIL_VERIFICATION_SECRET: 'too-short',
+    })
+
+    expect(error).toBeDefined()
+  })
+
+  it('should reject an invalid V2EX_HOT_TOP10_MAIL_TO', () => {
+    const { error } = environmentValidationSchema.validate({
+      ...requiredEnvironment,
+      V2EX_HOT_TOP10_MAIL_TO: 'invalid-email',
     })
 
     expect(error).toBeDefined()
