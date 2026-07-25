@@ -26,11 +26,13 @@ import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
 import { BatchDeleteUsersResultDto } from './dto/batch-delete-users-result.dto'
 import { UserPageResultDto } from './dto/user-page-result.dto'
+import { Public } from '../common/decorators/public.decorator'
 
 @ApiTags('用户')
 @ApiBearerAuth()
 @ApiAccessTokenErrorResponse()
 @Controller('user')
+@Public()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

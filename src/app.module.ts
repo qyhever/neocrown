@@ -16,6 +16,7 @@ import { DatabaseModule } from './database/database.module'
 import { LoggerModule } from './logger/logger.module'
 import { UserModule } from './user/user.module'
 import { AuthModule } from './auth/auth.module'
+import { CrawlerModule } from './crawler/crawler.module'
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuthModule } from './auth/auth.module'
     LoggerModule,
     UserModule,
     AuthModule,
+    CrawlerModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,0 +1,14 @@
+@hostname = localhost
+@port = 8300
+@host = {{hostname}}:{{port}}
+@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE5LCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiNGI3N2Q5OWQtN2ExMy00MTI0LWJkZTAtYjMxNDlhMTNiZDJhIiwiaWF0IjoxNzg0OTYyMzgxLCJleHAiOjE3ODUwNDg3ODEsImlzcyI6Im5lb2Nyb3duIn0.cKzXckeSBItFVUUH4ey3IkrQ8y6pL-olCvU9ds2sXEM
+
+
+### crawl v2ex/hot-top10
+post http://{{host}}/api/crawler/v2ex/hot-top10/crawl
+Authorization: Bearer {{token}}
+
+
+### get v2ex/hot-top10 result
+get http://{{host}}/api/crawler/v2ex/hot-top10/result
+Authorization: Bearer {{token}}
