@@ -44,6 +44,8 @@ describe('CrawlerService', () => {
   })
 
   it('应该抓取并解析 V2EX 今日热贴 Top 10，并写入 JSON', async () => {
+    jest.useFakeTimers()
+    jest.setSystemTime(new Date('2026-07-25T00:00:00.000Z'))
     fetchMock.mockResolvedValue({
       ok: true,
       text: () => Promise.resolve(createHotTopicsHtml(12)),
@@ -71,7 +73,7 @@ describe('CrawlerService', () => {
         (topic) => topic.crawledAt === result.list[0].crawledAt,
       ),
     ).toBe(true)
-    expect(Number.isNaN(Date.parse(result.list[0].crawledAt))).toBe(false)
+    expect(result.list[0].crawledAt).toBe('2026-07-25 08:00:00')
     expect(mkdirMock).toHaveBeenCalledWith(
       expect.stringMatching(/public\/crawler$/),
       { recursive: true },

@@ -13,6 +13,7 @@ import type {
 
 const V2EX_SOURCE_URL = 'https://v2ex.6688988.xyz/'
 const REQUEST_TIMEOUT_MS = 10_000
+const CHINA_TIMEZONE_OFFSET_MS = 8 * 60 * 60 * 1000
 const HOT_TOPIC_SELECTOR = '#TopicsHot .item_hot_topic_title a'
 const V2EX_HOT_TOP10_RESULT_FILE = join(
   process.cwd(),
@@ -25,7 +26,7 @@ const V2EX_HOT_TOP10_RESULT_FILE = join(
 export class CrawlerService {
   async crawlV2exHotTop10(): Promise<V2exHotTop10ResultDto> {
     const html = await this.fetchHomePageHtml()
-    const crawledAt = new Date().toISOString()
+    const crawledAt = this.toChinaDateTimeString(new Date())
     const list = this.parseHotTopics(html, crawledAt)
 
     if (list.length === 0) {
@@ -135,6 +136,14 @@ export class CrawlerService {
       })
       .get()
       .filter((topic): topic is V2exHotTopicDto => topic !== null)
+  }
+
+  private toChinaDateTimeString(date: Date): string {
+    const chinaDate = new Date(date.getTime() + CHINA_TIMEZONE_OFFSET_MS)
+    const pad = (value: number, length = 2): string =>
+      value.toString().padStart(length, '0')
+
+    return `${chinaDate.getUTCFullYear()}-${pad(chinaDate.getUTCMonth() + 1)}-${pad(chinaDate.getUTCDate())} ${pad(chinaDate.getUTCHours())}:${pad(chinaDate.getUTCMinutes())}:${pad(chinaDate.getUTCSeconds())}`
   }
 
   private extractTopicId(url: string): number | null {

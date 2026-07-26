@@ -24,7 +24,7 @@ export class V2exHotTopicDto {
 
   @ApiProperty({
     description: '服务端抓取完成时间',
-    example: '2026-07-25T10:00:00.000Z',
+    example: '2026-07-25 18:00:00',
   })
   crawledAt: string
 }

@@ -1,7 +1,7 @@
 @hostname = localhost
 @port = 8300
 @host = {{hostname}}:{{port}}
-@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE5LCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiNGI3N2Q5OWQtN2ExMy00MTI0LWJkZTAtYjMxNDlhMTNiZDJhIiwiaWF0IjoxNzg0OTYyMzgxLCJleHAiOjE3ODUwNDg3ODEsImlzcyI6Im5lb2Nyb3duIn0.cKzXckeSBItFVUUH4ey3IkrQ8y6pL-olCvU9ds2sXEM
+@token= eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjE5LCJ0eXBlIjoiYWNjZXNzIiwianRpIjoiOWY3MzA2ZDMtZDA5NS00NTYxLWFlM2MtMjgzOWU4MWE5YzEyIiwiaWF0IjoxNzg1MDc1MjA4LCJleHAiOjE3ODUxNjE2MDgsImlzcyI6Im5lb2Nyb3duIn0.1aV1iT2Uzb5xEXntc4r96rJQcrrOcMD82UaXpfOmJ40
 
 
 ### crawl v2ex/hot-top10
