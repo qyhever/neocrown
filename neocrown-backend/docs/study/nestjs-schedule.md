@@ -2,7 +2,7 @@
 
 在后端系统中，定时任务是很常见的能力。比如每天同步数据、定期刷新缓存、轮询第三方接口、清理过期文件、生成报表等。这类逻辑如果写成临时脚本，短期看很快，长期看会逐渐失控：缺少依赖注入、缺少日志、缺少测试，也很难复用已有业务 Service。
 
-NestJS 推荐使用 `@nestjs/schedule` 实现定时任务。它把定时任务纳入 NestJS 的模块体系中，可以正常使用依赖注入、配置管理、日志系统和测试工具。本文结合当前项目中的 V2EX 热贴爬虫定时任务，介绍一套可直接复用的实现方式。
+NestJS 推荐使用 `@nestjs/schedule` 实现定时任务。它把定时任务纳入 NestJS 的模块体系中，可以正常使用依赖注入、配置管理、日志系统和测试工具。本文结合 V2EX 热贴爬虫定时任务，介绍一套可直接复用的实现方式。
 
 ## 一、适用场景
 
@@ -26,7 +26,7 @@ NestJS 推荐使用 `@nestjs/schedule` 实现定时任务。它把定时任务�
 pnpm add @nestjs/schedule
 ```
 
-当前项目安装的版本是：
+安装的版本是：
 
 ```json
 {
@@ -55,7 +55,7 @@ import { CrawlerModule } from './crawler/crawler.module'
 export class AppModule {}
 ```
 
-在当前项目中，注册位置是 `src/app.module.ts`：
+注册位置是 `src/app.module.ts`：
 
 ```typescript
 @Module({
@@ -78,7 +78,7 @@ export class AppModule implements NestModule {}
 
 定时任务建议放在业务模块内部的独立 Service 中，而不是塞进 Controller 或原有业务 Service。
 
-当前项目的目录结构如下：
+目录结构如下：
 
 ```text
 src/crawler/
@@ -107,7 +107,7 @@ await this.crawlerService.crawlV2exHotTop10()
 
 `@Cron()` 用于声明一个 Cron 定时任务。
 
-当前项目的需求是：每天北京时间早上 08:00 自动抓取 V2EX 热贴 Top 10。实现如下：
+需求是：每天北京时间早上 08:00 自动抓取 V2EX 热贴 Top 10。实现如下：
 
 ```typescript
 import { Injectable, Logger } from '@nestjs/common'
@@ -154,7 +154,7 @@ export class CrawlerSchedulerService {
 
 实际业务中的定时任务不能只考虑成功路径。网络抖动、第三方接口异常、数据库短暂不可用，都可能导致一次任务失败。
 
-当前项目采用的策略是：
+采用的策略是：
 
 - 第 1 次立即执行
 - 失败后最多额外重试 3 次
@@ -245,7 +245,7 @@ export class CrawlerModule {}
 
 定时任务也应该写单元测试。不要只依赖「等到 08:00 看它是否执行」这种人工验证方式。
 
-当前项目测试了 4 类行为：
+测试了 4 类行为：
 
 - 成功时只调用爬虫服务 1 次，并记录成功日志
 - 前几次失败、后续成功时会重试，并记录最终成功日志
@@ -407,7 +407,7 @@ async syncData(): Promise<void> {
 - 关键业务参数
 - 异常 stack
 
-当前项目中，最终成功和最终失败都会记录明确日志，这能保证一次定时任务生命周期一定有最终结果。
+最终成功和最终失败都会记录明确日志，这能保证一次定时任务生命周期一定有最终结果。
 
 ### 4. 不要吞掉所有异常却没有结果日志
 
