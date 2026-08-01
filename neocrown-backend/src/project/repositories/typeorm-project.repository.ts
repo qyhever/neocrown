@@ -11,6 +11,14 @@ export class TypeOrmProjectRepository implements ProjectRepository {
     private readonly repository: Repository<Project>,
   ) {}
 
+  create(data: Partial<Project>): Project {
+    return this.repository.create(data)
+  }
+
+  save(project: Project): Promise<Project> {
+    return this.repository.save(project)
+  }
+
   findAll(): Promise<Project[]> {
     return this.repository.find({
       order: { createdAt: 'DESC' },
