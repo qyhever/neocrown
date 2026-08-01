@@ -1,0 +1,8 @@
+@hostname = localhost
+@port = 8300
+@host = {{hostname}}:{{port}}
+@token=
+
+### project list
+get http://{{host}}/api/project HTTP/1.1
+Authorization: Bearer {{token}}

@@ -18,6 +18,7 @@ import { LoggerModule } from './logger/logger.module'
 import { UserModule } from './user/user.module'
 import { AuthModule } from './auth/auth.module'
 import { CrawlerModule } from './crawler/crawler.module'
+import { ProjectModule } from './project/project.module'
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CrawlerModule } from './crawler/crawler.module'
     UserModule,
     AuthModule,
     CrawlerModule,
+    ProjectModule,
   ],
   controllers: [AppController],
   providers: [

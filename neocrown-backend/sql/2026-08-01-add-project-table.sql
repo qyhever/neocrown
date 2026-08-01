@@ -1,0 +1,20 @@
+CREATE TABLE `project` (
+  `createdAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `createdBy` int NULL DEFAULT NULL COMMENT '创建人用户ID',
+  `updatedAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `updatedBy` int NULL DEFAULT NULL COMMENT '更新人用户ID',
+  `id` int NOT NULL AUTO_INCREMENT COMMENT 'Unique identifier',
+  `description` varchar(500) NULL DEFAULT NULL COMMENT '项目描述',
+  `deletedAt` timestamp NULL DEFAULT NULL COMMENT '删除时间',
+  `effectiveTimeStart` timestamp NULL DEFAULT NULL COMMENT '生效开始时间',
+  `effectiveTimeEnd` timestamp NULL DEFAULT NULL COMMENT '生效结束时间',
+  `name` varchar(100) NOT NULL DEFAULT '' COMMENT '项目名称',
+  `type` char(1) NOT NULL COMMENT '项目类型：1 社招，2 校招',
+  `isEnabled` tinyint NOT NULL DEFAULT '1' COMMENT '启用/禁用',
+  `isSystemDefault` tinyint NOT NULL DEFAULT '0' COMMENT '系统默认',
+  PRIMARY KEY (`id`),
+  KEY `idx_project_type` (`type`),
+  KEY `idx_project_deleted_at` (`deletedAt`),
+  KEY `idx_project_effective_time` (`effectiveTimeStart`,`effectiveTimeEnd`),
+  CONSTRAINT `chk_project_type` CHECK (`type` IN ('1', '2'))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
