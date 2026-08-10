@@ -5,7 +5,7 @@ on:
   #   branches:
   #     - main
   #   paths:
-  #     - 'bluespot-backend/**'
+  #     - 'neocrown-backend/**'
   #     - '.github/workflows/deploy-backend.yml'
   workflow_dispatch:
 
@@ -28,11 +28,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
         with:
-          go-version-file: bluespot-backend/go.mod
-          cache-dependency-path: bluespot-backend/go.sum
+          version: 11.9.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: neocrown-backend/.nvmrc
+          cache: pnpm
+          cache-dependency-path: neocrown-backend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: neocrown-backend
+        run: pnpm install --frozen-lockfile
 
       - name: Configure SSH
         shell: bash
@@ -63,4 +73,10 @@ jobs:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
           SERVER_PORT: ${{ secrets.SERVER_PORT || '22' }}
           SERVER_USER: ${{ secrets.SERVER_USER }}
-        run: bash bluespot-backend/scripts/deploy.sh
+        run: |
+          : "${SERVER_HOST:?SERVER_HOST secret is required}"
+          : "${SERVER_PORT:?SERVER_PORT secret is required}"
+          : "${SERVER_USER:?SERVER_USER secret is required}"
+          REMOTE_HOST="${SERVER_USER}@${SERVER_HOST}" \
+          DEPLOY_SSH_PORT="${SERVER_PORT}" \
+          bash neocrown-backend/scripts/deploy.sh
