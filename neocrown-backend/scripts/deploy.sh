@@ -6,6 +6,7 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 
 REMOTE_HOST="${REMOTE_HOST:-kr}"
+DEPLOY_SSH_PORT="${DEPLOY_SSH_PORT:-}"
 REMOTE_DIR="${REMOTE_DIR:-/opt/apps/neocrown-backend}"
 IMAGE_NAME="${IMAGE_NAME:-neocrown-backend}"
 IMAGE_TAG="${1:-$(node -p "require('${PROJECT_DIR}/package.json').version")}"
@@ -13,10 +14,22 @@ COMPOSE_FILE="${PROJECT_DIR}/docker-compose.yml"
 BASE_ENV_FILE="${PROJECT_DIR}/.env"
 PROD_ENV_FILE="${PROJECT_DIR}/.env.production"
 FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
+SSH_ARGS=()
+SCP_ARGS=()
 
 if [[ ! "${IMAGE_TAG}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
   echo "错误：镜像版本格式无效：${IMAGE_TAG}" >&2
   exit 1
+fi
+
+if [[ -n "${DEPLOY_SSH_PORT}" ]]; then
+  if [[ ! "${DEPLOY_SSH_PORT}" =~ ^[0-9]{1,5}$ ]] || ((10#${DEPLOY_SSH_PORT} < 1 || 10#${DEPLOY_SSH_PORT} > 65535)); then
+    echo "错误：DEPLOY_SSH_PORT 必须是 1-65535 之间的端口号：${DEPLOY_SSH_PORT}" >&2
+    exit 1
+  fi
+
+  SSH_ARGS=(-p "${DEPLOY_SSH_PORT}")
+  SCP_ARGS=(-P "${DEPLOY_SSH_PORT}")
 fi
 
 for command_name in docker ssh scp gzip; do
@@ -32,7 +45,7 @@ if ! docker info >/dev/null 2>&1; then
 fi
 
 echo "正在检测远程服务器架构：${REMOTE_HOST}"
-REMOTE_ARCH="$(ssh "${REMOTE_HOST}" 'uname -m' | tr -d '\r' | tail -n 1)"
+REMOTE_ARCH="$(ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" 'uname -m' | tr -d '\r' | tail -n 1)"
 
 case "${REMOTE_ARCH}" in
   x86_64 | amd64)
@@ -68,17 +81,17 @@ echo "正在导出并压缩镜像：${ARCHIVE_NAME}"
 docker save "${FULL_IMAGE}" | gzip -c >"${ARCHIVE_PATH}"
 
 echo "正在创建远程目录：${REMOTE_HOST}:${REMOTE_DIR}"
-ssh "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" <<'REMOTE_PREPARE'
+ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" <<'REMOTE_PREPARE'
 set -Eeuo pipefail
 mkdir -p "$1"
 REMOTE_PREPARE
 
 echo "正在上传镜像、Compose 文件和基础环境配置"
-scp "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${BASE_ENV_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
-scp "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${PROD_ENV_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
+scp "${SCP_ARGS[@]}" "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${BASE_ENV_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
+scp "${SCP_ARGS[@]}" "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${PROD_ENV_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
 
 echo "正在远程导入镜像并启动服务"
-ssh "${REMOTE_HOST}" bash -s -- \
+ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- \
   "${REMOTE_DIR}" "${IMAGE_NAME}" "${IMAGE_TAG}" "${ARCHIVE_NAME}" <<'REMOTE_DEPLOY'
 set -Eeuo pipefail
 
