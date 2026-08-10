@@ -83,12 +83,39 @@ docker save "${FULL_IMAGE}" | gzip -c >"${ARCHIVE_PATH}"
 echo "正在创建远程目录：${REMOTE_HOST}:${REMOTE_DIR}"
 ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" <<'REMOTE_PREPARE'
 set -Eeuo pipefail
-mkdir -p "$1"
+if [[ -d "$1" ]]; then
+  echo "远程目录已存在，跳过创建：$1"
+else
+  mkdir -p "$1"
+fi
 REMOTE_PREPARE
 
-echo "正在上传镜像、Compose 文件和基础环境配置"
-scp "${SCP_ARGS[@]}" "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${BASE_ENV_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
-scp "${SCP_ARGS[@]}" "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${PROD_ENV_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
+upload_env_file() {
+  local local_file="$1"
+  local remote_name="$2"
+
+  if ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" "${remote_name}" <<'REMOTE_ENV_CHECK'
+set -Eeuo pipefail
+[[ -f "$1/$2" ]]
+REMOTE_ENV_CHECK
+  then
+    echo "远程环境配置已存在，跳过上传：${REMOTE_DIR}/${remote_name}"
+    return
+  fi
+
+  if [[ ! -f "${local_file}" ]]; then
+    echo "错误：远程环境配置 ${REMOTE_DIR}/${remote_name} 不存在，且本地文件 ${local_file} 不存在，无法上传。" >&2
+    exit 1
+  fi
+
+  echo "正在上传环境配置：${remote_name}"
+  scp "${SCP_ARGS[@]}" "${local_file}" "${REMOTE_HOST}:${REMOTE_DIR}/"
+}
+
+echo "正在上传镜像和 Compose 文件"
+scp "${SCP_ARGS[@]}" "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
+upload_env_file "${BASE_ENV_FILE}" ".env"
+upload_env_file "${PROD_ENV_FILE}" ".env.production"
 
 echo "正在远程导入镜像并启动服务"
 ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- \
