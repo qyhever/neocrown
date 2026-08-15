@@ -8,7 +8,6 @@ if [ -n "${SERVER_HOST:-}" ] && [ -n "${SERVER_USER:-}" ]; then
     DEPLOY_SSH_PORT="${SERVER_PORT:-22}"
 elif [ -z "${SERVER_HOST:-}" ] && [ -z "${SERVER_USER:-}" ]; then
     DEPLOY_TARGET="${DEPLOY_TARGET:-kr}"
-    DEPLOY_SSH_PORT="${SERVER_PORT:-22}"
 else
     echo "❌ SERVER_HOST 和 SERVER_USER 必须同时设置"
     exit 1
