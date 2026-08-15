@@ -1,5 +1,5 @@
 ---
-title: 使用 GitHub Actions 自动化部署 Neocrown 前后端
+title: 使用 GitHub Actions 自动化部署 Nodejs 前后端
 date: 2026-08-11
 tags:
   - GitHub Actions
@@ -9,21 +9,16 @@ tags:
   - Vue
 ---
 
-# 使用 GitHub Actions 自动化部署 Neocrown 前后端
+# 使用 GitHub Actions 自动化部署 Nodejs 前后端
 
-自动化部署的核心价值，不是把 `ssh` 命令搬到云端执行一次，而是把“构建、传输、发布、验证”这些容易出错的步骤固定下来。最近两次提交围绕 Neocrown 项目补齐了 GitHub Actions 部署链路：前端构建后通过 `rsync` 同步到 Nginx 目录，后端构建 Docker 镜像后上传到服务器，再用 Docker Compose 启动并执行健康检查。
-
-本文基于以下两个提交整理：
-
-- `8823e0e github actions`：新增前后端部署 workflow，并改造部署脚本以支持 GitHub Actions 传入服务器信息。
-- `3ffaa15 fix:deploy-backend.yml`：修正后端 workflow，从旧项目路径和 Go 环境切换为 `neocrown-backend` 的 Node.js + pnpm 构建链路。
+自动化部署的核心价值，不是把 `ssh` 命令搬到云端执行一次，而是把“构建、传输、发布、验证”这些容易出错的步骤固定下来。GitHub Actions 部署链路：前端构建后通过 `rsync` 同步到 Nginx 目录，后端构建 Docker 镜像后上传到服务器，再用 Docker Compose 启动并执行健康检查。
 
 ## 部署目标
 
-Neocrown 是一个前后端分离项目：
+现在 有一个前后端分离项目：
 
-- `neocrown-frontend`：Vue + Vite PC Web 端，构建产物为 `dist/`。
-- `neocrown-backend`：Node.js + NestJS 后端，使用 Docker 镜像和 Docker Compose 发布。
+- `application-frontend`：Vue + Vite PC Web 端，构建产物为 `dist/`。
+- `application-backend`：Node.js + NestJS 后端，使用 Docker 镜像和 Docker Compose 发布。
 
 自动化部署后，发布动作由 GitHub Actions 统一触发：
 
@@ -64,16 +59,16 @@ Neocrown 是一个前后端分离项目：
 建议为部署单独创建 SSH key，不要复用个人主力私钥：
 
 ```bash
-ssh-keygen -t ed25519 -C "github-actions-neocrown" -f ~/.ssh/neocrown_actions
-ssh-copy-id -i ~/.ssh/neocrown_actions.pub -p 22 user@example.com
+ssh-keygen -t ed25519 -C "github-actions-application" -f ~/.ssh/application_actions
+ssh-copy-id -i ~/.ssh/application_actions.pub -p 22 user@example.com
 ```
 
-然后把 `~/.ssh/neocrown_actions` 的内容配置到 `SERVER_SSH_RSA`。
+然后把 `~/.ssh/application_actions` 的内容配置到 `SERVER_SSH_RSA`。
 
 如果服务器禁用了 `ssh-copy-id`，可以手动追加公钥：
 
 ```bash
-cat ~/.ssh/neocrown_actions.pub
+cat ~/.ssh/application_actions.pub
 ```
 
 复制输出内容，追加到服务器用户的 `~/.ssh/authorized_keys`。
@@ -105,7 +100,7 @@ on:
     branches:
       - main
     paths:
-      - 'neocrown-frontend/**'
+      - 'application-frontend/**'
       - '.github/workflows/deploy-frontend.yml'
   workflow_dispatch:
 ```
@@ -125,9 +120,9 @@ workflow 先安装 pnpm，再通过 `.nvmrc` 指定 Node.js 版本：
 - name: Set up Node.js
   uses: actions/setup-node@v4
   with:
-    node-version-file: neocrown-frontend/.nvmrc
+    node-version-file: application-frontend/.nvmrc
     cache: pnpm
-    cache-dependency-path: neocrown-frontend/pnpm-lock.yaml
+    cache-dependency-path: application-frontend/pnpm-lock.yaml
 ```
 
 这里有两个重要点：
@@ -170,14 +165,14 @@ chmod 600 ~/.ssh/known_hosts
 前端最终调用：
 
 ```bash
-bash neocrown-frontend/scripts/deploy.sh
+bash application-frontend/scripts/deploy.sh
 ```
 
 脚本会执行：
 
 ```bash
 pnpm build
-rsync -avz --delete -e "ssh -p $DEPLOY_SSH_PORT" dist/ "${DEPLOY_TARGET}:/var/www/html/neocrown/"
+rsync -avz --delete -e "ssh -p $DEPLOY_SSH_PORT" dist/ "${DEPLOY_TARGET}:/var/www/html/application/"
 ```
 
 这里的部署目标由 GitHub Actions 注入：
@@ -192,8 +187,8 @@ DEPLOY_SSH_PORT="${SERVER_PORT:-22}"
 服务器上需要提前准备好 Nginx 静态目录：
 
 ```bash
-sudo mkdir -p /var/www/html/neocrown
-sudo chown -R user:user /var/www/html/neocrown
+sudo mkdir -p /var/www/html/application
+sudo chown -R user:user /var/www/html/application
 ```
 
 把 `user:user` 替换为 `SERVER_USER` 对应的用户和用户组。
@@ -206,7 +201,7 @@ sudo chown -R user:user /var/www/html/neocrown
 .github/workflows/deploy-backend.yml
 ```
 
-第二次提交重点修正了后端 workflow：它不再使用旧项目的 `bluespot-backend` 路径，也不再设置 Go 环境，而是改为 Neocrown 后端实际需要的 pnpm 和 Node.js。
+第二次提交重点修正了后端 workflow：它不再使用旧项目的 `bluespot-backend` 路径，也不再设置 Go 环境，而是改为 application 后端实际需要的 pnpm 和 Node.js。
 
 ### 1. 后端构建环境
 
@@ -221,9 +216,9 @@ sudo chown -R user:user /var/www/html/neocrown
 - name: Set up Node.js
   uses: actions/setup-node@v4
   with:
-    node-version-file: neocrown-backend/.nvmrc
+    node-version-file: application-backend/.nvmrc
     cache: pnpm
-    cache-dependency-path: neocrown-backend/pnpm-lock.yaml
+    cache-dependency-path: application-backend/pnpm-lock.yaml
 ```
 
 后端 `package.json` 中声明了：
@@ -244,7 +239,7 @@ sudo chown -R user:user /var/www/html/neocrown
 : "${SERVER_USER:?SERVER_USER secret is required}"
 REMOTE_HOST="${SERVER_USER}@${SERVER_HOST}" \
 DEPLOY_SSH_PORT="${SERVER_PORT}" \
-bash neocrown-backend/scripts/deploy.sh
+bash application-backend/scripts/deploy.sh
 ```
 
 这一步把 GitHub Secrets 转换成部署脚本理解的环境变量：
@@ -258,7 +253,7 @@ bash neocrown-backend/scripts/deploy.sh
 
 ### 3. 后端脚本做了什么
 
-`neocrown-backend/scripts/deploy.sh` 的发布逻辑可以拆成六步。
+`application-backend/scripts/deploy.sh` 的发布逻辑可以拆成六步。
 
 第一步，确定镜像版本：
 
@@ -269,7 +264,7 @@ IMAGE_TAG="${1:-$(node -p "require('${PROJECT_DIR}/package.json').version")}"
 如果没有传入参数，就读取 `package.json` 的 `version`。当前后端默认镜像名和版本类似：
 
 ```text
-neocrown-backend:1.0.0
+application-backend:1.0.0
 ```
 
 第二步，校验 SSH 端口：
@@ -320,7 +315,7 @@ upload_env_file "${PROD_ENV_FILE}" ".env.production"
 默认远程目录为：
 
 ```text
-/opt/apps/neocrown-backend
+/opt/apps/application-backend
 ```
 
 脚本会先检查远程目录是否存在：如果已存在就跳过创建，不存在才执行 `mkdir -p`。
@@ -377,17 +372,17 @@ GitHub Actions 负责构建和触发部署，但服务器运行环境仍需要�
 前端使用 Nginx 或其他静态文件服务。当前脚本默认同步到：
 
 ```text
-/var/www/html/neocrown/
+/var/www/html/application/
 ```
 
 需要确保部署用户对该目录有写权限：
 
 ```bash
-sudo mkdir -p /var/www/html/neocrown
-sudo chown -R deploy:deploy /var/www/html/neocrown
+sudo mkdir -p /var/www/html/application
+sudo chown -R deploy:deploy /var/www/html/application
 ```
 
-如果 Nginx 配置了其他目录，需要同步修改 `neocrown-frontend/scripts/deploy.sh` 中的目标路径。
+如果 Nginx 配置了其他目录，需要同步修改 `application-frontend/scripts/deploy.sh` 中的目标路径。
 
 ### 后端服务器
 
@@ -426,15 +421,15 @@ gzip --version
 发布后可以在服务器上检查：
 
 ```bash
-docker ps --filter name=neocrown-backend
-docker logs --tail=100 neocrown-backend
+docker ps --filter name=application-backend
+docker logs --tail=100 application-backend
 curl http://127.0.0.1:8300/api/meta
 ```
 
 前端可以检查静态文件是否已经同步：
 
 ```bash
-ls -lah /var/www/html/neocrown
+ls -lah /var/www/html/application
 ```
 
 ## 六、常见失败原因
@@ -463,7 +458,7 @@ workflow 中已经使用 `tr -d '\r'` 处理 CRLF，但仍需要保证私钥内�
 说明依赖清单和 lockfile 不一致。本地更新 lockfile 后提交：
 
 ```bash
-cd neocrown-frontend
+cd application-frontend
 pnpm install
 git add package.json pnpm-lock.yaml
 git commit -m "chore: update frontend lockfile"
@@ -472,7 +467,7 @@ git commit -m "chore: update frontend lockfile"
 后端同理：
 
 ```bash
-cd neocrown-backend
+cd application-backend
 pnpm install
 git add package.json pnpm-lock.yaml
 git commit -m "chore: update backend lockfile"
@@ -490,7 +485,7 @@ git commit -m "chore: update backend lockfile"
 可以登录服务器手动查看：
 
 ```bash
-cd /opt/apps/neocrown-backend
+cd /opt/apps/application-backend
 docker compose ps
 docker compose logs --tail=200 app
 ```
@@ -512,9 +507,3 @@ docker compose logs --tail=200 app
 - 后端镜像推送到 GHCR，再由服务器拉取镜像。
 - 增加测试步骤，例如 `pnpm lint`、`pnpm test`、`pnpm build`。
 - 增加部署通知，例如企业微信、飞书或 Slack。
-
-## 总结
-
-Neocrown 这次 GitHub Actions 改造，把原本依赖本地手动执行的部署脚本接入了标准 CI/CD 流程。前端通过 `pnpm build` 和 `rsync` 发布静态资源，后端通过 Docker 镜像压缩包和 Docker Compose 完成发布，并在上线后执行健康检查。
-
-对一个前后端分离、部署在单台服务器上的项目来说，这是一条足够直接、可维护、也便于排障的自动化部署路径。后续只要把 Secrets 配好，团队成员就可以在 GitHub 页面完成发布，而不必共享服务器私钥、手动复制构建产物或记忆复杂命令。
