@@ -2,6 +2,8 @@
 
 set -euo pipefail
 
+DEPLOY_SSH_PORT=""
+
 # GitHub Actions 通过环境变量指定服务器；本地继续兼容 ~/.ssh/config 中的 kr。
 if [ -n "${SERVER_HOST:-}" ] && [ -n "${SERVER_USER:-}" ]; then
     DEPLOY_TARGET="${SERVER_USER}@${SERVER_HOST}"
