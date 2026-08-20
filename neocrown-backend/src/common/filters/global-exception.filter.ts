@@ -53,10 +53,12 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const clientMessage = this.getClientMessage(exception, statusCode)
     const log = this.createLog(exception, request, statusCode)
 
-    if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
-      this.logger.error(log, this.getStack(exception))
-    } else {
-      this.logger.warn(log)
+    if (!this.shouldSkipLogging(exception)) {
+      if (statusCode >= HttpStatus.INTERNAL_SERVER_ERROR) {
+        this.logger.error(log, this.getStack(exception))
+      } else {
+        this.logger.warn(log)
+      }
     }
 
     if (response.headersSent) return
@@ -157,5 +159,14 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   private getStack(exception: unknown): string | undefined {
     return exception instanceof Error ? exception.stack : undefined
+  }
+
+  private shouldSkipLogging(exception: unknown): boolean {
+    return (
+      typeof exception === 'object' &&
+      exception !== null &&
+      'skipLogging' in exception &&
+      exception.skipLogging === true
+    )
   }
 }

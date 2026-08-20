@@ -30,7 +30,7 @@ export class AccessTokenGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<RequestWithContext>()
     const token = this.extractBearerToken(request.headers.authorization)
 
-    if (!token) this.throwUnauthorized()
+    if (!token) this.throwUnauthorized(true)
 
     let payload: unknown
     try {
@@ -38,10 +38,10 @@ export class AccessTokenGuard implements CanActivate {
         issuer: this.configService.get('JWT_ISSUER', { infer: true }),
       })
     } catch {
-      this.throwUnauthorized()
+      this.throwUnauthorized(true)
     }
 
-    if (!this.isAccessTokenPayload(payload)) this.throwUnauthorized()
+    if (!this.isAccessTokenPayload(payload)) this.throwUnauthorized(true)
 
     request.user = { id: payload.sub }
     return true
@@ -69,9 +69,12 @@ export class AccessTokenGuard implements CanActivate {
     )
   }
 
-  private throwUnauthorized(): never {
-    throw new UnauthorizedException(
-      ResponseMessageEnum.ACCESS_TOKEN_INVALID_OR_EXPIRED,
+  private throwUnauthorized(skipLogging = false): never {
+    throw Object.assign(
+      new UnauthorizedException(
+        ResponseMessageEnum.ACCESS_TOKEN_INVALID_OR_EXPIRED,
+      ),
+      { skipLogging },
     )
   }
 }
