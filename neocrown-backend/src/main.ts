@@ -1,17 +1,19 @@
 import { ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { NestFactory, type NestApplication } from '@nestjs/core'
+import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { knife4jSetup } from 'nestjs-knife4j-plus'
 import { join } from 'node:path'
+import type { NestExpressApplication } from '@nestjs/platform-express'
 import { AppModule } from './app.module'
 import type { EnvironmentVariables } from './config/environment.validation'
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestApplication>(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   })
+  app.set('trust proxy', 'loopback')
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER))
   const configService = app.get(ConfigService<EnvironmentVariables, true>)
 
