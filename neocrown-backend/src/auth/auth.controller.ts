@@ -1,4 +1,12 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Logger,
+  Post,
+  Req,
+} from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import {
   ApiValidationErrorResponse,
@@ -8,6 +16,7 @@ import {
 import { SuccessMessage } from '../common/decorators/success-message.decorator'
 import { Public } from '../common/decorators/public.decorator'
 import { ResponseMessageEnum } from '../common/enums/response-message.enum'
+import type { RequestWithContext } from '../common/types/request-with-context'
 import { AuthService } from './auth.service'
 import { AuthTokensDto } from './dto/auth-tokens.dto'
 import { LoginDto } from './dto/login.dto'
@@ -19,6 +28,8 @@ import { VerificationCodeService } from './verification-code.service'
 @ApiTags('认证')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name)
+
   constructor(
     private readonly authService: AuthService,
     private readonly verificationCodeService: VerificationCodeService,
@@ -73,8 +84,21 @@ export class AuthController {
     data: { model: AuthTokensDto },
   })
   @ApiValidationErrorResponse()
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto)
+  async login(@Body() dto: LoginDto, @Req() request: RequestWithContext) {
+    const result = await this.authService.login(dto)
+
+    if (!('error' in result)) {
+      this.logger.log({
+        email: dto.email,
+        event: 'user_login',
+        ip: request.ip,
+        message: '用户登录成功',
+        requestId: request.requestId,
+        userAgent: request.get('user-agent'),
+      })
+    }
+
+    return result
   }
 
   @Post('refresh')
