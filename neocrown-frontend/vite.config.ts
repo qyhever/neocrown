@@ -26,7 +26,7 @@ export default defineConfig(({ mode, command }) => {
     },
     base: '/',
     server: {
-      port: env.PORT,
+      port: env.PORT ? Number(env.PORT) : 5175,
       // host: '0.0.0.0',
       proxy: {
         '/neocrown/api/dev': {
