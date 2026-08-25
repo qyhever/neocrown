@@ -7,6 +7,7 @@ import { knife4jSetup } from 'nestjs-knife4j-plus'
 import { join } from 'node:path'
 import type { NestExpressApplication } from '@nestjs/platform-express'
 import { AppModule } from './app.module'
+import { StripCacheBustingQueryPipe } from './common/pipes/strip-cache-busting-query.pipe'
 import type { EnvironmentVariables } from './config/environment.validation'
 
 async function bootstrap() {
@@ -20,6 +21,7 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd(), 'public'))
   app.setGlobalPrefix('/api')
   app.useGlobalPipes(
+    new StripCacheBustingQueryPipe(),
     new ValidationPipe({
       forbidNonWhitelisted: true,
       whitelist: true,
