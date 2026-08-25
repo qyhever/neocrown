@@ -4,7 +4,7 @@
     "createdBy": "admin",
     "createdAt": "2026-01-05 09:30:00",
     "updatedBy": "admin",
-    "updatedAt": "2026-08-05 11:04:19",
+    "updatedAt": "2026-08-25 23:54:24",
     "deletedAt": null,
     "name": "2026 年春季校园招聘",
     "recruitType": "campus",
@@ -13,7 +13,7 @@
     "status": "undo",
     "useCount": 8,
     "description": "面向 2026 届毕业生的春季校园招聘项目",
-    "isEnabled": true
+    "isEnabled": false
   },
   {
     "id": 2,
