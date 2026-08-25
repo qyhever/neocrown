@@ -14,8 +14,8 @@ COMPOSE_FILE="${PROJECT_DIR}/docker-compose.yml"
 BASE_ENV_FILE="${PROJECT_DIR}/.env"
 PROD_ENV_FILE="${PROJECT_DIR}/.env.production"
 FULL_IMAGE="${IMAGE_NAME}:${IMAGE_TAG}"
-SSH_ARGS=()
-SCP_ARGS=()
+SSH_COMMAND=(ssh)
+SCP_COMMAND=(scp)
 
 if [[ ! "${IMAGE_TAG}" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
   echo "错误：镜像版本格式无效：${IMAGE_TAG}" >&2
@@ -28,8 +28,8 @@ if [[ -n "${DEPLOY_SSH_PORT}" ]]; then
     exit 1
   fi
 
-  SSH_ARGS=(-p "${DEPLOY_SSH_PORT}")
-  SCP_ARGS=(-P "${DEPLOY_SSH_PORT}")
+  SSH_COMMAND+=(-p "${DEPLOY_SSH_PORT}")
+  SCP_COMMAND+=(-P "${DEPLOY_SSH_PORT}")
 fi
 
 for command_name in docker ssh scp gzip; do
@@ -45,7 +45,7 @@ if ! docker info >/dev/null 2>&1; then
 fi
 
 echo "正在检测远程服务器架构：${REMOTE_HOST}"
-REMOTE_ARCH="$(ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" 'uname -m' | tr -d '\r' | tail -n 1)"
+REMOTE_ARCH="$("${SSH_COMMAND[@]}" "${REMOTE_HOST}" 'uname -m' | tr -d '\r' | tail -n 1)"
 
 case "${REMOTE_ARCH}" in
   x86_64 | amd64)
@@ -81,20 +81,16 @@ echo "正在导出并压缩镜像：${ARCHIVE_NAME}"
 docker save "${FULL_IMAGE}" | gzip -c >"${ARCHIVE_PATH}"
 
 echo "正在创建远程目录：${REMOTE_HOST}:${REMOTE_DIR}"
-ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" <<'REMOTE_PREPARE'
+"${SSH_COMMAND[@]}" "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" <<'REMOTE_PREPARE'
 set -Eeuo pipefail
-if [[ -d "$1" ]]; then
-  echo "远程目录已存在，跳过创建：$1"
-else
-  mkdir -p "$1"
-fi
+mkdir -p "$1"
 REMOTE_PREPARE
 
 upload_env_file() {
   local local_file="$1"
   local remote_name="$2"
 
-  if ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" "${remote_name}" <<'REMOTE_ENV_CHECK'
+  if "${SSH_COMMAND[@]}" "${REMOTE_HOST}" bash -s -- "${REMOTE_DIR}" "${remote_name}" <<'REMOTE_ENV_CHECK'
 set -Eeuo pipefail
 [[ -f "$1/$2" ]]
 REMOTE_ENV_CHECK
@@ -109,16 +105,16 @@ REMOTE_ENV_CHECK
   fi
 
   echo "正在上传环境配置：${remote_name}"
-  scp "${SCP_ARGS[@]}" "${local_file}" "${REMOTE_HOST}:${REMOTE_DIR}/"
+  "${SCP_COMMAND[@]}" "${local_file}" "${REMOTE_HOST}:${REMOTE_DIR}/"
 }
 
 echo "正在上传镜像和 Compose 文件"
-scp "${SCP_ARGS[@]}" "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
+"${SCP_COMMAND[@]}" "${ARCHIVE_PATH}" "${COMPOSE_FILE}" "${REMOTE_HOST}:${REMOTE_DIR}/"
 upload_env_file "${BASE_ENV_FILE}" ".env"
 upload_env_file "${PROD_ENV_FILE}" ".env.production"
 
 echo "正在远程导入镜像并启动服务"
-ssh "${SSH_ARGS[@]}" "${REMOTE_HOST}" bash -s -- \
+"${SSH_COMMAND[@]}" "${REMOTE_HOST}" bash -s -- \
   "${REMOTE_DIR}" "${IMAGE_NAME}" "${IMAGE_TAG}" "${ARCHIVE_NAME}" <<'REMOTE_DEPLOY'
 set -Eeuo pipefail
 
