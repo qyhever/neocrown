@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { MessagePlugin } from 'tdesign-vue-next'
 import { post } from '@/utils/request'
 import type { RequestMethodResponse, UploadFile } from 'tdesign-vue-next'
@@ -87,10 +87,11 @@ async function uploadFile(uploadFiles: UploadFile | UploadFile[]): Promise<Reque
   formData.append('file', rawFile)
 
   try {
+    fp.value?.stop()
+    fp.value?.setProgress(0)
     fp.value?.start()
     const response = await post<AttachUploadResponse>('/attach/upload', formData, {
       onUploadProgress(event) {
-        console.log('event: ', event)
         if (!event.lengthComputable) return
         currentFile.percent = Math.round((event.loaded / event.total) * 100)
       },
@@ -107,7 +108,14 @@ async function uploadFile(uploadFiles: UploadFile | UploadFile[]): Promise<Reque
       },
     }
   } catch (err) {
-    const error = err instanceof Error ? err.message : '上传失败'
+    fp.value?.stop()
+    fp.value?.setProgress(0)
+    const error =
+      err instanceof Error
+        ? err.message
+        : typeof err === 'object' && err !== null && 'message' in err
+          ? String(err.message)
+          : '上传失败'
     MessagePlugin.error(error)
 
     return {
@@ -121,8 +129,12 @@ async function uploadFile(uploadFiles: UploadFile | UploadFile[]): Promise<Reque
 onMounted(() => {
   fp.value = new FakeProgress({
     timeConstant: 20000, // 总模拟时长 ms
-    autoStart: true, // 实例化自动开始
+    autoStart: false,
   })
+})
+
+onUnmounted(() => {
+  fp.value?.stop()
 })
 </script>
 

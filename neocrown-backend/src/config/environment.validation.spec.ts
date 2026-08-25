@@ -24,6 +24,12 @@ const requiredEnvironment = {
   POSTAL_FROM_NAME: 'NeoCrown',
   EMAIL_VERIFICATION_SECRET: 'a-secure-test-secret-with-32-characters',
   V2EX_HOT_TOP10_MAIL_TO: 'receiver@example.com',
+  ATTACH_VIEW_BASE_URL: 'http://localhost:8300/public/uploads',
+  ATTACH_UPLOAD_DIR_PATH: './public/uploads',
+  ATTACH_VIEW_LARGE_FILE_BASE_URL: 'http://localhost:8300/public/larges',
+  ATTACH_UPLOAD_LARGE_FILE_PATH: './public/larges',
+  ATTACH_CHUNK_DIR_PATH: './public/chunks',
+  ATTACH_CHUNK_DIR_SALT: 'neocrown-test-chunk-salt',
 }
 
 describe('environmentValidationSchema', () => {

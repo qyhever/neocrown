@@ -19,6 +19,7 @@ import { UserModule } from './user/user.module'
 import { AuthModule } from './auth/auth.module'
 import { CrawlerModule } from './crawler/crawler.module'
 import { ProjectModule } from './project/project.module'
+import { AttachModule } from './attach/attach.module'
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { ProjectModule } from './project/project.module'
     AuthModule,
     CrawlerModule,
     ProjectModule,
+    AttachModule,
   ],
   controllers: [AppController],
   providers: [

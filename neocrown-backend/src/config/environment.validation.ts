@@ -34,6 +34,12 @@ export interface EnvironmentVariables {
   POSTAL_FROM_NAME: string
   EMAIL_VERIFICATION_SECRET: string
   V2EX_HOT_TOP10_MAIL_TO: string
+  ATTACH_VIEW_BASE_URL: string
+  ATTACH_UPLOAD_DIR_PATH: string
+  ATTACH_VIEW_LARGE_FILE_BASE_URL: string
+  ATTACH_UPLOAD_LARGE_FILE_PATH: string
+  ATTACH_CHUNK_DIR_PATH: string
+  ATTACH_CHUNK_DIR_SALT: string
 }
 
 export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
@@ -75,4 +81,12 @@ export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
   POSTAL_FROM_NAME: Joi.string().min(1).required(),
   EMAIL_VERIFICATION_SECRET: Joi.string().min(32).required(),
   V2EX_HOT_TOP10_MAIL_TO: Joi.string().email().required(),
+  ATTACH_VIEW_BASE_URL: Joi.string().uri({ allowRelative: false }).required(),
+  ATTACH_UPLOAD_DIR_PATH: Joi.string().min(1).required(),
+  ATTACH_VIEW_LARGE_FILE_BASE_URL: Joi.string()
+    .uri({ allowRelative: false })
+    .required(),
+  ATTACH_UPLOAD_LARGE_FILE_PATH: Joi.string().min(1).required(),
+  ATTACH_CHUNK_DIR_PATH: Joi.string().min(1).required(),
+  ATTACH_CHUNK_DIR_SALT: Joi.string().min(1).required(),
 })

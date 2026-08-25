@@ -53,7 +53,6 @@ export function uploadChunk(params: UploadChunkRequest) {
   fd.append('chunk', params.chunk)
   fd.append('uploadId', params.uploadId)
   fd.append('fileMd5', params.fileMd5)
-  fd.append('chunkIndex', chunkIndex.toString())
   fd.append('fileName', params.fileName)
   return post<void>(`/upload/chunk?chunkIndex=${chunkIndex}&chunkTotal=${chunkTotal}`, fd)
 }
