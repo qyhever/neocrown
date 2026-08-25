@@ -2,6 +2,7 @@ import 'virtual:svg-icons-register' // 导入SVG图标注册
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import TDesign from 'tdesign-vue-next'
+import { VueQueryPlugin } from '@tanstack/vue-query'
 
 import App from './App.vue'
 import router from './router'
@@ -16,5 +17,6 @@ app.component('ComSvgIcon', ComSvgIcon)
 app.use(createPinia())
 app.use(router)
 app.use(TDesign)
+app.use(VueQueryPlugin)
 
 app.mount('#app')

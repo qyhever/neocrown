@@ -52,11 +52,11 @@ const stringFields: EditableProjectField[] = [
 const editableFields: EditableProjectField[] = [...stringFields, 'isEnabled']
 
 function success<T>(data: T): ApiResponse<T> {
-  return { code: '000', msg: 'success', data }
+  return { success: true, msg: 'success', data }
 }
 
 function error(code: '400' | '404' | '500', msg: string): ApiResponse<never> {
-  return { code, msg, data: null }
+  return { success: false, code, msg, data: null }
 }
 
 function readProjects() {

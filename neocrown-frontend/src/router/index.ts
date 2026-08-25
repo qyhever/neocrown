@@ -51,6 +51,14 @@ const basicRoutes = [
       title: '发送Telegram消息',
     },
   },
+  {
+    path: '/project-manage',
+    name: 'project-manage',
+    component: () => import('../views/project-manage/index.vue'),
+    meta: {
+      title: '项目管理',
+    },
+  },
 ]
 
 const router = createRouter({

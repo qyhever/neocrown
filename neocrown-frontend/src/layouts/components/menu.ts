@@ -113,4 +113,10 @@ export const menuList: IMenuItem[] = [
       },
     ],
   },
+  {
+    title: '项目管理',
+    path: '/project-manage',
+    icon: 'smile',
+    // authKey: 'home',
+  },
 ]
