@@ -9,6 +9,7 @@ import tailwindcss from '@tailwindcss/vite'
 import metaPlugin, { getBuildHash } from './build/meta'
 import dayjs from 'dayjs'
 import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
+import { viteMockServe } from 'vite-plugin-mock'
 
 // https://vite.dev/config/
 export default defineConfig(({ mode, command }) => {
@@ -25,9 +26,14 @@ export default defineConfig(({ mode, command }) => {
     },
     base: '/',
     server: {
-      port: 5175,
+      port: env.PORT,
       // host: '0.0.0.0',
       proxy: {
+        '/neocrown/api/dev': {
+          target: 'http://localhost:' + env.PORT,
+          changeOrigin: true,
+          rewrite: (path) => path.replace('/neocrown/api/dev', '/dev'),
+        },
         '/neocrown/api': {
           target: 'http://localhost:8300',
           changeOrigin: true,
@@ -46,6 +52,11 @@ export default defineConfig(({ mode, command }) => {
         iconDirs: [path.resolve(process.cwd(), 'src/assets/icons')],
         // 指定symbolId格式
         symbolId: 'icon-[dir]-[name]',
+      }),
+      viteMockServe({
+        mockPath: 'mock',
+        enable: true,
+        watchFiles: false,
       }),
     ],
     resolve: {

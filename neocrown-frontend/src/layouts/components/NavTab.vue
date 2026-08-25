@@ -82,7 +82,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ChevronLeft, ChevronRight, X, House } from 'lucide-vue-next'
+import { ChevronLeft, ChevronRight, X, House } from '@lucide/vue'
 import type { PopupProps, DropdownOption } from 'tdesign-vue-next'
 import { homeRoute, useAppStore } from '@/stores/app'
 import type { ITabNavItem } from '@/stores/app'
