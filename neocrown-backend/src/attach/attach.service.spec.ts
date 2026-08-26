@@ -1,12 +1,21 @@
 import { createHash } from 'node:crypto'
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises'
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { BadRequestException } from '@nestjs/common'
+import { BadRequestException, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { EnvironmentVariables } from '../config/environment.validation'
 import { MAX_ATTACH_FILE_SIZE } from './attach.types'
 import { AttachService } from './attach.service'
+
+const realSetImmediate = setImmediate
 
 describe('AttachService', () => {
   let rootDir: string
@@ -14,6 +23,7 @@ describe('AttachService', () => {
   let configValues: Record<string, string>
 
   beforeEach(async () => {
+    jest.useFakeTimers()
     rootDir = await mkdtemp(join(tmpdir(), 'neocrown-attach-'))
     configValues = {
       ATTACH_UPLOAD_DIR_PATH: join(rootDir, 'uploads'),
@@ -30,6 +40,9 @@ describe('AttachService', () => {
   })
 
   afterEach(async () => {
+    jest.clearAllTimers()
+    jest.restoreAllMocks()
+    jest.useRealTimers()
     await rm(rootDir, { recursive: true, force: true })
   })
 
@@ -149,6 +162,82 @@ describe('AttachService', () => {
     await expect(readdir(join(rootDir, 'chunks'))).resolves.toEqual([])
   })
 
+  it('should delete a merged file after ten minutes and log success', async () => {
+    const file = Buffer.from('temporary-video')
+    const fileMd5 = md5(file)
+    const verifyResult = await service.verifyLargeFileUpload({
+      fileMd5,
+      fileName: 'video.mp4',
+      fileSize: file.length,
+    })
+    await service.uploadLargeFileChunk(
+      { originalname: 'video.mp4', buffer: file },
+      {
+        uploadId: verifyResult.uploadId,
+        fileMd5,
+        fileName: 'video.mp4',
+        chunkIndex: 0,
+        chunkTotal: 1,
+      },
+    )
+    const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation()
+    const filePath = join(rootDir, 'larges', `${fileMd5}.mp4`)
+
+    await service.mergeLargeFileUpload({
+      uploadId: verifyResult.uploadId,
+      fileMd5,
+      chunkLength: 1,
+    })
+
+    await jest.advanceTimersByTimeAsync(10 * 60 * 1000 - 1)
+    await expect(readFile(filePath)).resolves.toEqual(file)
+
+    await jest.advanceTimersToNextTimerAsync()
+    await flushFileSystemPromises()
+    await expect(readFile(filePath)).rejects.toMatchObject({ code: 'ENOENT' })
+    expect(logSpy).toHaveBeenCalledWith(`合并文件删除成功: ${filePath}`)
+  })
+
+  it('should catch and log a merged file deletion failure', async () => {
+    const file = Buffer.from('undeletable-video')
+    const fileMd5 = md5(file)
+    const verifyResult = await service.verifyLargeFileUpload({
+      fileMd5,
+      fileName: 'video.mp4',
+      fileSize: file.length,
+    })
+    await service.uploadLargeFileChunk(
+      { originalname: 'video.mp4', buffer: file },
+      {
+        uploadId: verifyResult.uploadId,
+        fileMd5,
+        fileName: 'video.mp4',
+        chunkIndex: 0,
+        chunkTotal: 1,
+      },
+    )
+    const errorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation()
+    const filePath = join(rootDir, 'larges', `${fileMd5}.mp4`)
+
+    await service.mergeLargeFileUpload({
+      uploadId: verifyResult.uploadId,
+      fileMd5,
+      chunkLength: 1,
+    })
+    await rm(filePath)
+    await mkdir(filePath)
+    await writeFile(join(filePath, 'keep'), 'content')
+
+    await expect(
+      jest.advanceTimersByTimeAsync(10 * 60 * 1000),
+    ).resolves.toBeUndefined()
+    await flushFileSystemPromises()
+    expect(errorSpy).toHaveBeenCalledWith(
+      expect.stringContaining(`合并文件删除失败: ${filePath};`),
+      expect.any(String),
+    )
+  })
+
   it('should support instant upload after a completed merge', async () => {
     const file = Buffer.from('complete-file')
     const fileMd5 = md5(file)
@@ -185,6 +274,31 @@ describe('AttachService', () => {
     })
   })
 
+  it('should not schedule deletion for an instant upload', async () => {
+    const file = Buffer.from('already-exists')
+    const fileMd5 = md5(file)
+    const filePath = join(rootDir, 'larges', `${fileMd5}.mp4`)
+    await mkdir(join(rootDir, 'larges'), { recursive: true })
+    await writeFile(filePath, file)
+    const verifyResult = await service.verifyLargeFileUpload({
+      fileMd5,
+      fileName: 'video.mp4',
+      fileSize: file.length,
+    })
+
+    await expect(
+      service.mergeLargeFileUpload({
+        uploadId: verifyResult.uploadId,
+        fileMd5,
+        chunkLength: 1,
+      }),
+    ).resolves.toEqual({
+      url: `http://localhost:8300/public/larges/${fileMd5}.mp4`,
+      msg: '文件已存在，已完成秒传',
+    })
+    expect(jest.getTimerCount()).toBe(0)
+  })
+
   it('should reject invalid chunks, missing chunks and invalid file metadata', async () => {
     const file = Buffer.from('file-content')
     const fileMd5 = md5(file)
@@ -213,6 +327,7 @@ describe('AttachService', () => {
         chunkLength: 2,
       }),
     ).rejects.toBeInstanceOf(BadRequestException)
+    expect(jest.getTimerCount()).toBe(0)
     await expect(
       service.verifyLargeFileUpload({
         fileMd5: 'not-an-md5',
@@ -262,9 +377,14 @@ describe('AttachService', () => {
       }),
     ).rejects.toBeInstanceOf(BadRequestException)
     await expect(readdir(join(rootDir, 'larges'))).resolves.toEqual([])
+    expect(jest.getTimerCount()).toBe(0)
   })
 })
 
 function md5(value: Buffer): string {
   return createHash('md5').update(value).digest('hex')
+}
+
+async function flushFileSystemPromises(): Promise<void> {
+  await new Promise<void>((resolve) => realSetImmediate(resolve))
 }

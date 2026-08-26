@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common'
+import { BadRequestException, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { basename, extname, join } from 'node:path'
 import {
@@ -36,9 +36,12 @@ interface UploadMetadata {
 const MD5_PATTERN = /^[a-f0-9]{32}$/i
 const UPLOAD_ID_PATTERN = /^[a-f0-9]{64}$/i
 const METADATA_FILE_NAME = '.upload.json'
+const MERGED_FILE_DELETE_DELAY_MS = 10 * 60 * 1000
 
 @Injectable()
 export class AttachService {
+  private readonly logger = new Logger(AttachService.name)
+
   constructor(
     private readonly configService: ConfigService<EnvironmentVariables, true>,
   ) {}
@@ -239,6 +242,7 @@ export class AttachService {
       }
 
       await rm(uploadPath.chunkDirectory, { recursive: true, force: true })
+      this.scheduleMergedFileDeletion(uploadPath.path)
       return { url, msg: '文件合并成功' }
     } catch (error) {
       if (output) {
@@ -428,6 +432,24 @@ export class AttachService {
 
   private createViewUrl(baseUrl: string, fileName: string): string {
     return `${baseUrl.replace(/\/+$/, '')}/${encodeURIComponent(fileName)}`
+  }
+
+  private scheduleMergedFileDeletion(filePath: string): void {
+    const timer = setTimeout(() => {
+      void this.deleteMergedFile(filePath)
+    }, MERGED_FILE_DELETE_DELAY_MS)
+    timer.unref()
+  }
+
+  private async deleteMergedFile(filePath: string): Promise<void> {
+    try {
+      await rm(filePath)
+      this.logger.log(`合并文件删除成功: ${filePath}`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      const stack = error instanceof Error ? (error.stack ?? message) : message
+      this.logger.error(`合并文件删除失败: ${filePath}; ${message}`, stack)
+    }
   }
 }
 
