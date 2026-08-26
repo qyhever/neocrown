@@ -12,6 +12,9 @@ services:
       NODE_ENV: production
     volumes:
         - ./logs:/app/logs
+        - /var/www/html/neocrown-uploads:/var/www/html/neocrown-uploads
+        - /var/www/html/neocrown-larges:/var/www/html/neocrown-larges
+        - /var/www/html/neocrown-chunks:/var/www/html/neocrown-chunks
     healthcheck:
       test:
         - CMD
