@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { ConfigService } from '@nestjs/config'
 import { JwtService } from '@nestjs/jwt'
@@ -98,6 +99,9 @@ describe('AuthService', () => {
                 JWT_ACCESS_EXPIRE: '10m',
                 JWT_REFRESH_EXPIRE: '7d',
                 JWT_ISSUER: 'neocrown-test',
+                WX_WORK_WEBHOOK_SEND_URL:
+                  'https://qyapi.weixin.qq.com/cgi-bin/webhook/send',
+                WX_WORK_WEBHOOK_SEND_KEY: 'webhook-test-key',
               }
 
               return values[key]
@@ -107,6 +111,10 @@ describe('AuthService', () => {
       ],
     }).compile()
     service = module.get(AuthService)
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   describe('login', () => {
@@ -185,6 +193,110 @@ describe('AuthService', () => {
         status: 403,
       })
       expect(jwtService.signAsync).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('notifyLoginSuccess', () => {
+    const context = {
+      email: 'user@example.com',
+      event: 'user_login' as const,
+      ip: '127.0.0.1',
+      message: '用户登录成功',
+      requestId: 'request-id',
+    }
+
+    it('应该通过带 key 的 webhook URL 发送不提醒群成员的多行文本', async () => {
+      const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(
+        new Response(JSON.stringify({ errcode: 0, errmsg: 'ok' }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      )
+
+      await expect(service.notifyLoginSuccess(context)).resolves.toBeUndefined()
+
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const [url, options] = fetchMock.mock.calls[0]
+      expect(url).toBeInstanceOf(URL)
+      expect((url as URL).origin + (url as URL).pathname).toBe(
+        'https://qyapi.weixin.qq.com/cgi-bin/webhook/send',
+      )
+      expect((url as URL).searchParams.get('key')).toBe('webhook-test-key')
+      expect(options).toMatchObject({
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+      })
+      expect(options?.signal).toBeInstanceOf(AbortSignal)
+      expect(JSON.parse(options?.body as string)).toEqual({
+        msgtype: 'text',
+        text: {
+          content: [
+            '用户登录成功',
+            '邮箱：user@example.com',
+            '事件：user_login',
+            'IP：127.0.0.1',
+            '请求 ID：request-id',
+            'User-Agent：未知',
+          ].join('\n'),
+        },
+      })
+      expect(options?.body).not.toContain('mentioned_list')
+    })
+
+    it.each([
+      [
+        'HTTP 非成功状态',
+        () => Promise.resolve(new Response(null, { status: 503 })),
+      ],
+      [
+        '企业微信业务错误',
+        () =>
+          Promise.resolve(
+            new Response(JSON.stringify({ errcode: 40014 }), { status: 200 }),
+          ),
+      ],
+      [
+        '无效 JSON 响应',
+        () => Promise.resolve(new Response('not-json', { status: 200 })),
+      ],
+      [
+        '无效响应结构',
+        () =>
+          Promise.resolve(
+            new Response(JSON.stringify({ errmsg: 'ok' }), { status: 200 }),
+          ),
+      ],
+      ['网络异常', () => Promise.reject(new Error('network failed'))],
+    ])('%s时应该只记录错误并正常结束', async (_case, fetchResult) => {
+      jest.spyOn(global, 'fetch').mockImplementation(fetchResult)
+      const loggerError = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation()
+
+      await expect(service.notifyLoginSuccess(context)).resolves.toBeUndefined()
+
+      expect(loggerError).toHaveBeenCalledTimes(1)
+      expect(loggerError.mock.calls[0][0]).not.toContain('webhook-test-key')
+    })
+
+    it('请求超过 5 秒时应该记录超时且正常结束', async () => {
+      const abortController = new AbortController()
+      const timeoutSpy = jest
+        .spyOn(AbortSignal, 'timeout')
+        .mockReturnValue(abortController.signal)
+      jest
+        .spyOn(global, 'fetch')
+        .mockRejectedValue(new DOMException('timed out', 'TimeoutError'))
+      const loggerError = jest
+        .spyOn(Logger.prototype, 'error')
+        .mockImplementation()
+
+      await expect(service.notifyLoginSuccess(context)).resolves.toBeUndefined()
+
+      expect(timeoutSpy).toHaveBeenCalledWith(5000)
+      expect(loggerError).toHaveBeenCalledWith(
+        '企业微信登录通知发送失败：请求超时',
+      )
     })
   })
 

@@ -41,7 +41,12 @@ JWT_SECRET=replace-with-a-strong-random-jwt-secret
 JWT_ACCESS_EXPIRE=10m
 JWT_REFRESH_EXPIRE=7d
 JWT_ISSUER=neocrown
+WX_WORK_WEBHOOK_SEND_URL=https://qyapi.weixin.qq.com/cgi-bin/webhook/send
+WX_WORK_WEBHOOK_SEND_KEY=replace-with-your-webhook-key
 ```
+
+`WX_WORK_WEBHOOK_SEND_URL` 仅填写不含 `key` 参数的 HTTPS 地址，机器人密钥通过
+`WX_WORK_WEBHOOK_SEND_KEY` 单独配置。登录成功通知不会提醒群成员；通知发送失败或超时也不会影响登录响应。
 
 ```bash
 $ pnpm install

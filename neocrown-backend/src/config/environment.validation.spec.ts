@@ -30,6 +30,8 @@ const requiredEnvironment = {
   ATTACH_UPLOAD_LARGE_FILE_PATH: './public/larges',
   ATTACH_CHUNK_DIR_PATH: './public/chunks',
   ATTACH_CHUNK_DIR_SALT: 'neocrown-test-chunk-salt',
+  WX_WORK_WEBHOOK_SEND_URL: 'https://qyapi.weixin.qq.com/cgi-bin/webhook/send',
+  WX_WORK_WEBHOOK_SEND_KEY: 'webhook-test-key',
 }
 
 describe('environmentValidationSchema', () => {
@@ -142,6 +144,39 @@ describe('environmentValidationSchema', () => {
     const { error } = environmentValidationSchema.validate({
       ...requiredEnvironment,
       V2EX_HOT_TOP10_MAIL_TO: 'invalid-email',
+    })
+
+    expect(error).toBeDefined()
+  })
+
+  it.each(['WX_WORK_WEBHOOK_SEND_URL', 'WX_WORK_WEBHOOK_SEND_KEY'] as const)(
+    'should require %s',
+    (key) => {
+      const environment = { ...requiredEnvironment }
+      delete environment[key]
+
+      const { error } = environmentValidationSchema.validate(environment)
+
+      expect(error).toBeDefined()
+    },
+  )
+
+  it.each(['not-a-url', 'http://qyapi.weixin.qq.com/cgi-bin/webhook/send'])(
+    'should reject an invalid or non-HTTPS webhook URL: %s',
+    (url) => {
+      const { error } = environmentValidationSchema.validate({
+        ...requiredEnvironment,
+        WX_WORK_WEBHOOK_SEND_URL: url,
+      })
+
+      expect(error).toBeDefined()
+    },
+  )
+
+  it('should reject an empty webhook key', () => {
+    const { error } = environmentValidationSchema.validate({
+      ...requiredEnvironment,
+      WX_WORK_WEBHOOK_SEND_KEY: '   ',
     })
 
     expect(error).toBeDefined()

@@ -88,14 +88,17 @@ export class AuthController {
     const result = await this.authService.login(dto)
 
     if (!('error' in result)) {
-      this.logger.log({
+      const loginContext = {
         email: dto.email,
-        event: 'user_login',
+        event: 'user_login' as const,
         ip: request.ip,
         message: '用户登录成功',
         requestId: request.requestId,
         userAgent: request.get('user-agent'),
-      })
+      }
+
+      this.logger.log(loginContext)
+      void this.authService.notifyLoginSuccess(loginContext)
     }
 
     return result

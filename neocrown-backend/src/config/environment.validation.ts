@@ -40,6 +40,8 @@ export interface EnvironmentVariables {
   ATTACH_UPLOAD_LARGE_FILE_PATH: string
   ATTACH_CHUNK_DIR_PATH: string
   ATTACH_CHUNK_DIR_SALT: string
+  WX_WORK_WEBHOOK_SEND_URL: string
+  WX_WORK_WEBHOOK_SEND_KEY: string
 }
 
 export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
@@ -89,4 +91,8 @@ export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
   ATTACH_UPLOAD_LARGE_FILE_PATH: Joi.string().min(1).required(),
   ATTACH_CHUNK_DIR_PATH: Joi.string().min(1).required(),
   ATTACH_CHUNK_DIR_SALT: Joi.string().min(1).required(),
+  WX_WORK_WEBHOOK_SEND_URL: Joi.string()
+    .uri({ allowRelative: false, scheme: ['https'] })
+    .required(),
+  WX_WORK_WEBHOOK_SEND_KEY: Joi.string().trim().min(1).required(),
 })

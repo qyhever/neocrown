@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   UnauthorizedException,
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
@@ -16,8 +17,19 @@ import { RegisterDto } from './dto/register.dto'
 import { LoginDto } from './dto/login.dto'
 import { VerificationCodeService } from './verification-code.service'
 
+export interface LoginSuccessNotificationContext {
+  email: string
+  event: 'user_login'
+  ip?: string
+  message: string
+  requestId: string
+  userAgent?: string
+}
+
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name)
+
   constructor(
     private readonly dataSource: DataSource,
     private readonly userService: UserService,
@@ -52,6 +64,75 @@ export class AuthService {
     }
 
     return this.issueTokens(user.id)
+  }
+
+  async notifyLoginSuccess(
+    context: LoginSuccessNotificationContext,
+  ): Promise<void> {
+    try {
+      const webhookUrl = new URL(
+        this.configService.get('WX_WORK_WEBHOOK_SEND_URL', { infer: true }),
+      )
+      webhookUrl.searchParams.set(
+        'key',
+        this.configService.get('WX_WORK_WEBHOOK_SEND_KEY', { infer: true }),
+      )
+
+      const content = [
+        context.message,
+        `邮箱：${context.email}`,
+        `事件：${context.event}`,
+        `IP：${context.ip ?? '未知'}`,
+        `请求 ID：${context.requestId}`,
+        `User-Agent：${context.userAgent ?? '未知'}`,
+      ].join('\n')
+
+      const response = await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ msgtype: 'text', text: { content } }),
+        signal: AbortSignal.timeout(5000),
+      })
+
+      if (!response.ok) {
+        this.logger.error(
+          `企业微信登录通知发送失败：HTTP 状态码 ${response.status}`,
+        )
+        return
+      }
+
+      let responseBody: unknown
+      try {
+        responseBody = await response.json()
+      } catch {
+        this.logger.error('企业微信登录通知发送失败：响应不是有效 JSON')
+        return
+      }
+
+      if (
+        typeof responseBody !== 'object' ||
+        responseBody === null ||
+        typeof (responseBody as Record<string, unknown>).errcode !== 'number'
+      ) {
+        this.logger.error('企业微信登录通知发送失败：响应格式无效')
+        return
+      }
+
+      const errcode = (responseBody as { errcode: number }).errcode
+      if (errcode !== 0) {
+        this.logger.error(`企业微信登录通知发送失败：业务错误码 ${errcode}`)
+      }
+    } catch (error) {
+      const errorName =
+        error instanceof DOMException || error instanceof Error
+          ? error.name
+          : undefined
+      const isTimeout =
+        errorName === 'AbortError' || errorName === 'TimeoutError'
+      this.logger.error(
+        `企业微信登录通知发送失败：${isTimeout ? '请求超时' : '网络请求异常'}`,
+      )
+    }
   }
 
   async refresh(

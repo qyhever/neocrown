@@ -11,12 +11,16 @@ import { JwtService } from '@nestjs/jwt'
 import request from 'supertest'
 import { App } from 'supertest/types'
 import { AuthController } from '../src/auth/auth.controller'
-import { AuthService } from '../src/auth/auth.service'
+import {
+  AuthService,
+  type LoginSuccessNotificationContext,
+} from '../src/auth/auth.service'
 import { VerificationCodeService } from '../src/auth/verification-code.service'
 import { ResponseInterceptor } from '../src/common/interceptors/response.interceptor'
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter'
 import { ResponseMessageEnum } from '../src/common/enums/response-message.enum'
 import { AccessTokenGuard } from '../src/auth/guards/access-token.guard'
+import { RequestContextMiddleware } from '../src/common/middleware/request-context.middleware'
 import { UserController } from '../src/user/user.controller'
 import { UserService } from '../src/user/user.service'
 
@@ -24,6 +28,9 @@ describe('AuthController (e2e)', () => {
   let app: INestApplication<App>
   const authService = {
     login: jest.fn(),
+    notifyLoginSuccess: jest
+      .fn<(context: LoginSuccessNotificationContext) => Promise<void>>()
+      .mockResolvedValue(undefined),
     refresh: jest.fn(),
     register: jest.fn(),
   }
@@ -61,6 +68,8 @@ describe('AuthController (e2e)', () => {
 
     app = module.createNestApplication()
     app.setGlobalPrefix('/api')
+    const requestContextMiddleware = new RequestContextMiddleware()
+    app.use(requestContextMiddleware.use.bind(requestContextMiddleware))
     app.useGlobalPipes(
       new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }),
     )
@@ -132,6 +141,7 @@ describe('AuthController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/auth/login')
+      .set('User-Agent', 'neocrown-e2e-agent')
       .send({ email: ' USER@Example.com ', password: 'password123' })
       .expect(200)
       .expect({
@@ -146,6 +156,18 @@ describe('AuthController (e2e)', () => {
     expect(authService.login).toHaveBeenCalledWith({
       email: 'user@example.com',
       password: 'password123',
+    })
+    const anyString: unknown = expect.any(String)
+    const uuid: unknown = expect.stringMatching(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    )
+    expect(authService.notifyLoginSuccess).toHaveBeenCalledWith({
+      email: 'user@example.com',
+      event: 'user_login',
+      ip: anyString,
+      message: '用户登录成功',
+      requestId: uuid,
+      userAgent: 'neocrown-e2e-agent',
     })
   })
 
@@ -163,6 +185,7 @@ describe('AuthController (e2e)', () => {
       })
 
     expect(authService.login).not.toHaveBeenCalled()
+    expect(authService.notifyLoginSuccess).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -178,6 +201,8 @@ describe('AuthController (e2e)', () => {
         .send({ email: 'user@example.com', password: 'password123' })
         .expect(200)
         .expect({ success: false, data: null, message })
+
+      expect(authService.notifyLoginSuccess).not.toHaveBeenCalled()
     },
   )
 
@@ -197,6 +222,7 @@ describe('AuthController (e2e)', () => {
           message: ResponseMessageEnum.USER_DISABLED,
         })
       })
+    expect(authService.notifyLoginSuccess).not.toHaveBeenCalled()
   })
 
   it('POST /auth/refresh 应该以 HTTP 200 返回新的双令牌', async () => {
