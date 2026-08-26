@@ -12,7 +12,7 @@ import {
   writeFile,
 } from 'node:fs/promises'
 import { createHash, randomUUID } from 'node:crypto'
-import { createReadStream } from 'node:fs'
+import { createReadStream, type Dirent } from 'node:fs'
 import type { EnvironmentVariables } from '../config/environment.validation'
 import {
   MAX_ATTACH_FILE_SIZE,
@@ -220,7 +220,7 @@ export class AttachService {
 
       for (const chunkPath of chunkPaths) {
         const input = createReadStream(chunkPath)
-        for await (const chunk of input) {
+        for await (const chunk of input as AsyncIterable<Buffer>) {
           hash.update(chunk)
           await output.write(chunk)
         }
@@ -393,7 +393,7 @@ export class AttachService {
   }
 
   private async listUploadedChunks(directory: string): Promise<number[]> {
-    let entries
+    let entries: Dirent[]
     try {
       entries = await readdir(directory, { withFileTypes: true })
     } catch (error) {
