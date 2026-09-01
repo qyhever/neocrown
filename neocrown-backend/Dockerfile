@@ -35,7 +35,7 @@ RUN pnpm install --prod --frozen-lockfile
 
 # 从构建阶段复制构建产物
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/public ./public
+COPY --from=builder --exclude=chunks --exclude=larges --exclude=uploads /app/public ./public
 
 # 暴露8300端口
 EXPOSE 8300
