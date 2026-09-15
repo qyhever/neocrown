@@ -26,6 +26,7 @@ import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './entities/user.entity'
 import { BatchDeleteUsersResultDto } from './dto/batch-delete-users-result.dto'
 import { UserPageResultDto } from './dto/user-page-result.dto'
+import { Public } from '../common/decorators/public.decorator'
 
 @ApiTags('用户')
 @ApiBearerAuth()
@@ -36,6 +37,7 @@ export class UserController {
 
   /** @deprecated 临时兼容入口，可绕过邮箱验证，请改用 POST /auth/register。 */
   @Post()
+  @Public()
   @ApiOperation({
     summary: '创建用户（已废弃）',
     description:
@@ -51,6 +53,7 @@ export class UserController {
   }
 
   @Get()
+  @Public()
   @ApiOperation({ summary: '查询用户列表', description: '返回所有未删除用户' })
   @ApiWrappedOkResponse({
     description: '查询用户列表成功',
@@ -62,6 +65,7 @@ export class UserController {
   }
 
   @Post('page')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: '分页查询用户列表',
@@ -123,6 +127,7 @@ export class UserController {
   }
 
   @Patch()
+  @Public()
   @ApiOperation({
     summary: '更新用户',
     description:
