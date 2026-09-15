@@ -13,3 +13,6 @@ dist
 .env
 .env.*
 !.env.example
+public/chunks
+public/larges
+public/uploads
