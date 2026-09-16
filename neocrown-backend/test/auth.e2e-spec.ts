@@ -8,6 +8,7 @@ import { Test } from '@nestjs/testing'
 import { ConfigService } from '@nestjs/config'
 import { APP_GUARD } from '@nestjs/core'
 import { JwtService } from '@nestjs/jwt'
+import cookieParser from 'cookie-parser'
 import request from 'supertest'
 import { App } from 'supertest/types'
 import { AuthController } from '../src/auth/auth.controller'
@@ -26,6 +27,7 @@ import { UserService } from '../src/user/user.service'
 
 describe('AuthController (e2e)', () => {
   let app: INestApplication<App>
+  let nodeEnvironment = 'test'
   const authService = {
     login: jest.fn(),
     notifyLoginSuccess: jest
@@ -48,6 +50,7 @@ describe('AuthController (e2e)', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks()
+    nodeEnvironment = 'test'
     const module = await Test.createTestingModule({
       controllers: [AuthController, UserController],
       providers: [
@@ -59,7 +62,13 @@ describe('AuthController (e2e)', () => {
         { provide: JwtService, useValue: jwtService },
         {
           provide: ConfigService,
-          useValue: { get: jest.fn().mockReturnValue('neocrown-test') },
+          useValue: {
+            get: jest.fn((key: string) => {
+              if (key === 'NODE_ENV') return nodeEnvironment
+              if (key === 'JWT_REFRESH_EXPIRE') return '7d'
+              return 'neocrown-test'
+            }),
+          },
         },
         { provide: UserService, useValue: userService },
         { provide: APP_GUARD, useClass: AccessTokenGuard },
@@ -68,6 +77,7 @@ describe('AuthController (e2e)', () => {
 
     app = module.createNestApplication()
     app.setGlobalPrefix('/api')
+    app.use(cookieParser())
     const requestContextMiddleware = new RequestContextMiddleware()
     app.use(requestContextMiddleware.use.bind(requestContextMiddleware))
     app.useGlobalPipes(
@@ -133,7 +143,7 @@ describe('AuthController (e2e)', () => {
     expect(authService.register).not.toHaveBeenCalled()
   })
 
-  it('POST /auth/login 应该规范化邮箱并返回双令牌', async () => {
+  it('POST /auth/login 应该规范化邮箱、仅返回访问令牌并设置刷新令牌 Cookie', async () => {
     authService.login.mockResolvedValue({
       accessToken: 'access-token',
       refreshToken: 'refresh-token',
@@ -148,9 +158,16 @@ describe('AuthController (e2e)', () => {
         success: true,
         data: {
           accessToken: 'access-token',
-          refreshToken: 'refresh-token',
         },
         message: ResponseMessageEnum.LOGIN_SUCCESS,
+      })
+      .expect('set-cookie', /refreshToken=refresh-token/)
+      .expect('set-cookie', /Max-Age=604800/)
+      .expect('set-cookie', /Path=\/api\/auth/)
+      .expect('set-cookie', /HttpOnly/)
+      .expect('set-cookie', /SameSite=Strict/)
+      .expect(({ headers }: { headers: Record<string, unknown> }) => {
+        expect(String(headers['set-cookie'])).not.toContain('Secure')
       })
 
     expect(authService.login).toHaveBeenCalledWith({
@@ -225,7 +242,7 @@ describe('AuthController (e2e)', () => {
     expect(authService.notifyLoginSuccess).not.toHaveBeenCalled()
   })
 
-  it('POST /auth/refresh 应该以 HTTP 200 返回新的双令牌', async () => {
+  it('POST /auth/refresh 应该从 Cookie 刷新、轮换 Cookie 并仅返回访问令牌', async () => {
     authService.refresh.mockResolvedValue({
       accessToken: 'new-access-token',
       refreshToken: 'new-refresh-token',
@@ -233,36 +250,47 @@ describe('AuthController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/auth/refresh')
-      .send({ refreshToken: 'valid-refresh-token' })
+      .set('Cookie', 'refreshToken=valid-refresh-token')
       .expect(200)
       .expect({
         success: true,
         data: {
           accessToken: 'new-access-token',
-          refreshToken: 'new-refresh-token',
         },
         message: ResponseMessageEnum.REFRESH_TOKEN_SUCCESS,
       })
+      .expect('set-cookie', /refreshToken=new-refresh-token/)
+      .expect('set-cookie', /Max-Age=604800/)
+      .expect('set-cookie', /Path=\/api\/auth/)
+      .expect('set-cookie', /HttpOnly/)
+      .expect('set-cookie', /SameSite=Strict/)
 
     expect(authService.refresh).toHaveBeenCalledWith('valid-refresh-token')
   })
 
   it.each([
-    ['空令牌', { refreshToken: '' }],
-    ['缺少令牌', {}],
-    ['非字符串令牌', { refreshToken: 123 }],
-    ['未知字段', { refreshToken: 'refresh-token', unexpected: true }],
-  ])('POST /auth/refresh 应该拒绝%s', async (_case, body) => {
-    await request(app.getHttpServer())
-      .post('/api/auth/refresh')
-      .send(body)
-      .expect(200)
-      .expect(({ body }: { body: { success: boolean } }) => {
-        expect(body.success).toBe(false)
-      })
+    ['只有请求体令牌', { refreshToken: 'body-refresh-token' }],
+    ['空请求体', {}],
+  ])(
+    'POST /auth/refresh %s时应该返回 401 并清除 Cookie',
+    async (_case, body) => {
+      await request(app.getHttpServer())
+        .post('/api/auth/refresh')
+        .send(body)
+        .expect(401)
+        .expect('set-cookie', /refreshToken=;/)
+        .expect('set-cookie', /Path=\/api\/auth/)
+        .expect(({ body }: { body: Record<string, unknown> }) => {
+          expect(body).toMatchObject({
+            success: false,
+            data: null,
+            message: ResponseMessageEnum.REFRESH_TOKEN_INVALID_OR_EXPIRED,
+          })
+        })
 
-    expect(authService.refresh).not.toHaveBeenCalled()
-  })
+      expect(authService.refresh).not.toHaveBeenCalled()
+    },
+  )
 
   it('POST /user/page 参数校验失败时应该返回 HTTP 200 失败响应', async () => {
     jwtService.verifyAsync.mockResolvedValue({ sub: 7, type: 'access' })
@@ -295,8 +323,9 @@ describe('AuthController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/auth/refresh')
-      .send({ refreshToken: 'invalid-refresh-token' })
+      .set('Cookie', 'refreshToken=invalid-refresh-token')
       .expect(401)
+      .expect('set-cookie', /refreshToken=;/)
       .expect(({ body }: { body: Record<string, unknown> }) => {
         expect(body).toMatchObject({
           success: false,
@@ -313,8 +342,9 @@ describe('AuthController (e2e)', () => {
 
     await request(app.getHttpServer())
       .post('/api/auth/refresh')
-      .send({ refreshToken: 'disabled-user-refresh-token' })
+      .set('Cookie', 'refreshToken=disabled-user-refresh-token')
       .expect(403)
+      .expect('set-cookie', /refreshToken=;/)
       .expect(({ body }: { body: Record<string, unknown> }) => {
         expect(body).toMatchObject({
           success: false,
@@ -322,6 +352,32 @@ describe('AuthController (e2e)', () => {
           message: ResponseMessageEnum.USER_DISABLED,
         })
       })
+  })
+
+  it('POST /auth/logout 应该清除刷新令牌 Cookie', async () => {
+    await request(app.getHttpServer())
+      .post('/api/auth/logout')
+      .set('Cookie', 'refreshToken=refresh-token')
+      .expect(200)
+      .expect('set-cookie', /refreshToken=;/)
+      .expect('set-cookie', /Path=\/api\/auth/)
+      .expect('set-cookie', /HttpOnly/)
+      .expect('set-cookie', /SameSite=Strict/)
+      .expect({ success: true, data: null, message: '请求成功' })
+  })
+
+  it('生产环境设置 Refresh Token Cookie 时应该启用 Secure', async () => {
+    nodeEnvironment = 'production'
+    authService.login.mockResolvedValue({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+    })
+
+    await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'user@example.com', password: 'password123' })
+      .expect(200)
+      .expect('set-cookie', /Secure/)
   })
 
   it('GET /user 缺少 access token 应该返回统一 HTTP 401 响应', async () => {

@@ -6,6 +6,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston'
 import { knife4jSetup } from 'nestjs-knife4j-plus'
 import { join } from 'node:path'
 import type { NestExpressApplication } from '@nestjs/platform-express'
+import cookieParser from 'cookie-parser'
 import { AppModule } from './app.module'
 import { StripCacheBustingQueryPipe } from './common/pipes/strip-cache-busting-query.pipe'
 import type { EnvironmentVariables } from './config/environment.validation'
@@ -19,6 +20,7 @@ async function bootstrap() {
   const configService = app.get(ConfigService<EnvironmentVariables, true>)
 
   app.useStaticAssets(join(process.cwd(), 'public'))
+  app.use(cookieParser())
   app.setGlobalPrefix('/api')
   app.useGlobalPipes(
     new StripCacheBustingQueryPipe(),
@@ -37,6 +39,15 @@ async function bootstrap() {
       scheme: 'bearer',
       bearerFormat: 'JWT',
     })
+    .addCookieAuth(
+      'refreshToken',
+      {
+        type: 'apiKey',
+        in: 'cookie',
+        description: '由登录接口设置的 HttpOnly Refresh Token Cookie',
+      },
+      'refreshToken',
+    )
     .build()
   const document = SwaggerModule.createDocument(app, swaggerConfig)
   SwaggerModule.setup('/api/docs', app, document)

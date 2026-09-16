@@ -33,13 +33,11 @@ Content-Type: application/json
   "password": "testuser123"
 }
 
-### refresh tokens
+### refresh tokens (uses the HttpOnly cookie set by login)
 post http://{{host}}/api/auth/refresh HTTP/1.1
-Content-Type: application/json
 
-{
-  "refreshToken": "replace-with-refresh-token"
-}
+### logout and clear refresh token cookie
+post http://{{host}}/api/auth/logout HTTP/1.1
 
 ### current user
 get http://{{host}}/api/user/me HTTP/1.1

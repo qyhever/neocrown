@@ -1,34 +1,33 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { refreshAccessToken as refreshAccessTokenApi, type AuthTokenResponse } from '@/api/global'
+import {
+  logout as logoutApi,
+  refreshAccessToken as refreshAccessTokenApi,
+  type AuthTokenResponse,
+} from '@/api/global'
 import { getUserInfo, type UserInfo } from '@/api/user'
 
 const ACCESS_TOKEN_KEY = 'accessToken'
 const REFRESH_TOKEN_KEY = 'refreshToken'
 
+localStorage.removeItem(REFRESH_TOKEN_KEY)
+
 export const useUserStore = defineStore('user', () => {
   const accessToken = ref(localStorage.getItem(ACCESS_TOKEN_KEY) || '')
-  const refreshToken = ref(localStorage.getItem(REFRESH_TOKEN_KEY) || '')
   const userInfo = ref<UserInfo | null>(null)
   const userInfoLoading = ref(false)
   const displayName = computed(() => userInfo.value?.nickname || userInfo.value?.username || '用户')
   let userInfoPromise: Promise<UserInfo> | null = null
 
-  function setTokens(tokens: AuthTokenResponse) {
+  function setAccessToken(tokens: AuthTokenResponse) {
     accessToken.value = tokens.accessToken
-    refreshToken.value = tokens.refreshToken
     localStorage.setItem(ACCESS_TOKEN_KEY, tokens.accessToken)
-    localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refreshToken)
   }
 
   async function refreshAccessToken() {
-    if (!refreshToken.value) {
-      return Promise.reject(new Error('Refresh token missing'))
-    }
+    const response = await refreshAccessTokenApi()
 
-    const response = await refreshAccessTokenApi(refreshToken.value)
-
-    setTokens(response)
+    setAccessToken(response)
     return response.accessToken
   }
 
@@ -54,23 +53,30 @@ export const useUserStore = defineStore('user', () => {
     return userInfoPromise
   }
 
-  function logout() {
+  function clearSession() {
     accessToken.value = ''
-    refreshToken.value = ''
     userInfo.value = null
     localStorage.removeItem(ACCESS_TOKEN_KEY)
     localStorage.removeItem(REFRESH_TOKEN_KEY)
   }
 
+  async function logout() {
+    try {
+      await logoutApi()
+    } finally {
+      clearSession()
+    }
+  }
+
   return {
     accessToken,
-    refreshToken,
     userInfo,
     userInfoLoading,
     displayName,
-    setTokens,
+    setAccessToken,
     refreshAccessToken,
     fetchUserInfo,
+    clearSession,
     logout,
   }
 })

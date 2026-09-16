@@ -132,11 +132,11 @@ async function submit() {
   notice.value = '正在验证...'
 
   try {
-    const tokens = await login({
+    const token = await login({
       email: username,
       password: password.value,
     })
-    userStore.setTokens(tokens)
+    userStore.setAccessToken(token)
     void userStore.fetchUserInfo(true).catch((error) => {
       console.warn('Failed to load user info after login.', error)
     })

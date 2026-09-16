@@ -7,15 +7,16 @@ export interface LoginRequest {
 
 export interface AuthTokenResponse {
   accessToken: string
-  refreshToken: string
 }
 
 export function login(data: LoginRequest) {
   return post<AuthTokenResponse>('/auth/login', data)
 }
 
-export function refreshAccessToken(refreshToken: string) {
-  return post<AuthTokenResponse>('/auth/refresh', {
-    refreshToken,
-  })
+export function refreshAccessToken() {
+  return post<AuthTokenResponse>('/auth/refresh')
+}
+
+export function logout() {
+  return post<null>('/auth/logout')
 }

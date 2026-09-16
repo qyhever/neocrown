@@ -108,10 +108,12 @@ const onChangeCollapsed = () => {
 }
 
 // 处理登出
-const handleLogout = () => {
-  userStore.logout()
+const handleLogout = async () => {
+  await userStore.logout().catch((error) => {
+    console.warn('Failed to clear refresh token cookie during logout.', error)
+  })
   MessagePlugin.success('已退出登录')
-  router.push('/login')
+  await router.push('/signin')
 }
 </script>
 

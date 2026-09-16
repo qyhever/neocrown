@@ -106,7 +106,7 @@ async function requestCatchEnd(
         MessagePlugin.closeAll()
         MessagePlugin.error('登录已过期，请重新登录')
         const userStore = useUserStore()
-        userStore.logout()
+        userStore.clearSession()
         router.replace('/signin')
         return Promise.reject(new Error('Refresh token failed'))
       }
@@ -124,7 +124,7 @@ async function requestCatchEnd(
         MessagePlugin.closeAll()
         MessagePlugin.error('登录已过期，请重新登录')
         const userStore = useUserStore()
-        userStore.logout()
+        userStore.clearSession()
         router.replace('/signin')
         return Promise.reject(refreshError)
       }
