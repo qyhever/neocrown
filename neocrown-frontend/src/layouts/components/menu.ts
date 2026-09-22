@@ -49,6 +49,11 @@ export const menuList: IMenuItem[] = [
         path: '/attach/chunk-upload',
         icon: 'smile',
       },
+      {
+        title: '视频信息解析',
+        path: '/attach/video-probe',
+        icon: 'smile',
+      },
     ],
   },
   {

@@ -20,6 +20,7 @@ import { AuthModule } from './auth/auth.module'
 import { CrawlerModule } from './crawler/crawler.module'
 import { ProjectModule } from './project/project.module'
 import { AttachModule } from './attach/attach.module'
+import { VideoModule } from './video/video.module'
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AttachModule } from './attach/attach.module'
     CrawlerModule,
     ProjectModule,
     AttachModule,
+    VideoModule,
   ],
   controllers: [AppController],
   providers: [

@@ -86,6 +86,7 @@ function requestThenEnd(param: IRequestThenEndParam) {
 interface IRequestCatchEndParam {
   error: {
     response: Response
+    message?: string
   }
 }
 
@@ -131,12 +132,12 @@ async function requestCatchEnd(
     }
 
     // 其他错误码的处理
-    const msg = codeMessage[status]
+    const msg = error.message || codeMessage[status]
     MessagePlugin.closeAll()
     MessagePlugin.error(msg || '操作失败')
   }
 
-  return Promise.reject(new Error('Request failed'))
+  return Promise.reject(error instanceof Error ? error : new Error(error.message || '请求失败'))
 }
 
 export async function request<T = any>(opts: RequestOptions): Promise<T> {

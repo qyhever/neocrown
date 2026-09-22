@@ -21,6 +21,8 @@ FROM node:24.12.0-alpine AS runner
 
 WORKDIR /app
 
+RUN apk add --no-cache ffmpeg
+
 # 保证运行时区一致
 ENV TZ=Asia/Shanghai
 

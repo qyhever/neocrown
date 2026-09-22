@@ -25,7 +25,7 @@ const basicRoutes = [
     component: () => import('../views/attach/SimpleUploadView.vue'),
     meta: {
       title: '常规上传',
-    }
+    },
   },
   {
     path: '/attach/chunk-upload',
@@ -33,7 +33,13 @@ const basicRoutes = [
     component: () => import('../views/attach/ChunkUploadView.vue'),
     meta: {
       title: '分片上传',
-    }
+    },
+  },
+  {
+    path: '/attach/video-probe',
+    name: 'video-probe',
+    component: () => import('../views/video/VideoProbeView.vue'),
+    meta: { title: '视频信息解析' },
   },
   {
     path: '/mail/send',
@@ -41,7 +47,7 @@ const basicRoutes = [
     component: () => import('../views/mail/SendMail.vue'),
     meta: {
       title: '发送邮件',
-    }
+    },
   },
   {
     path: '/notification/tg',
