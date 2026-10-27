@@ -17,3 +17,6 @@ process.env.ATTACH_VIEW_LARGE_FILE_BASE_URL ??=
 process.env.ATTACH_UPLOAD_LARGE_FILE_PATH ??= './public/larges'
 process.env.ATTACH_CHUNK_DIR_PATH ??= './public/chunks'
 process.env.ATTACH_CHUNK_DIR_SALT ??= 'neocrown-test-chunk-salt'
+
+process.env.CLA_CONFIG_TEMPLATE_PATH ??= './private/klash/template.yaml'
+process.env.CLA_CONFIG_RESULT_DIR_PATH ??= './private/klash/results'

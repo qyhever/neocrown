@@ -20,6 +20,7 @@ import { AuthModule } from './auth/auth.module'
 import { CrawlerModule } from './crawler/crawler.module'
 import { ProjectModule } from './project/project.module'
 import { AttachModule } from './attach/attach.module'
+import { KlashModule } from './klash/klash.module'
 import { VideoModule } from './video/video.module'
 
 @Module({
@@ -34,6 +35,7 @@ import { VideoModule } from './video/video.module'
     ProjectModule,
     AttachModule,
     VideoModule,
+    KlashModule,
   ],
   controllers: [AppController],
   providers: [

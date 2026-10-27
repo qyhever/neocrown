@@ -15,6 +15,12 @@ declare module 'vue-router' {
 
 const basicRoutes = [
   {
+    path: '/klash/generate',
+    name: 'klash-generate',
+    component: () => import('../views/klash/GenerateKlashView.vue'),
+    meta: { title: 'Klash 配置生成' },
+  },
+  {
     path: HOME_PATH,
     name: 'home',
     component: () => import('../views/HomeView.vue'),

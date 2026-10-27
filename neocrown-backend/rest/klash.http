@@ -1,0 +1,20 @@
+@baseUrl = http://localhost:8300/api
+@accessToken = replace-with-access-token
+
+### 批量生成（需要登录；每行一个 IP；重复 IP 保留）
+POST {{baseUrl}}/klash/generate
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "ips": "192.0.2.1\n2001:db8::1\n192.0.2.1"
+}
+
+### 非法 IP：HTTP 400，错误指出原始输入行号
+POST {{baseUrl}}/klash/generate
+Authorization: Bearer {{accessToken}}
+Content-Type: application/json
+
+{
+  "ips": "192.0.2.1\ninvalid"
+}

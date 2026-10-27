@@ -6,6 +6,8 @@ export type JwtExpiration =
   `${number}${'ms' | 's' | 'm' | 'h' | 'd' | 'w' | 'y'}`
 
 export interface EnvironmentVariables {
+  CLA_CONFIG_TEMPLATE_PATH: string
+  CLA_CONFIG_RESULT_DIR_PATH: string
   NODE_ENV: NodeEnvironment
   PORT: number
   DB_TYPE: DatabaseType
@@ -45,6 +47,8 @@ export interface EnvironmentVariables {
 }
 
 export const environmentValidationSchema = Joi.object<EnvironmentVariables>({
+  CLA_CONFIG_TEMPLATE_PATH: Joi.string().trim().min(1).required(),
+  CLA_CONFIG_RESULT_DIR_PATH: Joi.string().trim().min(1).required(),
   NODE_ENV: Joi.string()
     .valid('development', 'test', 'production')
     .default('development'),

@@ -4,6 +4,8 @@ import {
 } from './environment.validation'
 
 const requiredEnvironment = {
+  CLA_CONFIG_TEMPLATE_PATH: './private/klash/template.yaml',
+  CLA_CONFIG_RESULT_DIR_PATH: './private/klash/results',
   DB_DATABASE: 'neocrown',
   DB_HOST: '127.0.0.1',
   DB_PORT: '3306',
@@ -202,6 +204,22 @@ describe('environmentValidationSchema', () => {
       })
 
       expect(error).toBeDefined()
+    },
+  )
+})
+
+describe('Klash paths', () => {
+  it.each(['CLA_CONFIG_TEMPLATE_PATH', 'CLA_CONFIG_RESULT_DIR_PATH'])(
+    'requires a nonblank %s',
+    (key) => {
+      for (const value of [undefined, '', '   ']) {
+        expect(
+          environmentValidationSchema.validate({
+            ...requiredEnvironment,
+            [key]: value,
+          }).error,
+        ).toBeDefined()
+      }
     },
   )
 })

@@ -8,6 +8,11 @@ export interface IMenuItem {
 
 export const menuList: IMenuItem[] = [
   {
+    title: 'Klash 配置生成',
+    path: '/klash/generate',
+    icon: 'smile',
+  },
+  {
     title: '首页',
     path: '/home',
     icon: 'smile',

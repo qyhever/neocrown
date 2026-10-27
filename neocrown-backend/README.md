@@ -117,3 +117,46 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## 配置生成
+
+登录后访问前端 `/klash/generate`，每行输入一个 IPv4 或 IPv6。后端接口为
+`POST /api/klash/generate`，请求体为 `{ "ips": "192.0.2.1\n2001:db8::1" }`，
+需要 Bearer Access Token。空行忽略，重复 IP 保留；无效 IP 返回 HTTP 400 并指出原始行号。
+
+以下两个配置为必填项，支持绝对路径；相对路径以后端运行目录 `process.cwd()` 为基准：
+
+```dotenv
+CLA_CONFIG_TEMPLATE_PATH=./private/klash/template.yaml
+CLA_CONFIG_RESULT_DIR_PATH=./private/klash/results
+```
+
+模板和结果可能包含节点凭据，建议放在静态资源目录 `public` 之外，并设置合适的文件权限。
+现有 `.env.example` 中的路径仅为示例；部署时应根据实际文件位置调整。
+
+模板格式与根目录 `generate.js` 一致：顶层 `proxies:` 使用两个空格缩进的
+`- name:` 开始节点，每个节点恰有一个四空格缩进的 `server:`；顶层 `proxy-groups:`
+包含名为 `节点选择` 或 `🚀 节点选择` 的组，其四空格缩进的 `proxies:` 下使用六空格缩进的块式列表。
+不支持内联对象、内联数组等其他 YAML 排版。名称支持普通文本、JSON 双引号及 YAML 单引号。
+
+每次从原始模板重新生成，保留源节点和其他配置、注释及换行风格。按源节点与每行 IP 的组合
+新增节点，递增命名并避开已有节点名，再追加到目标组。结果目录自动创建，文件名按
+`Asia/Shanghai` 日期为 `YYYYMMDD.yaml`；同日再次生成通过同目录临时文件重命名覆盖，
+并发时以最后一次成功替换为准。读取、模板结构或写入失败返回 HTTP 500，已有文件保持完整。
+
+成功响应示例：
+
+```json
+{
+  "success": true,
+  "message": "配置生成成功",
+  "data": {
+    "filename": "20261027.yaml",
+    "ipCount": 2,
+    "sourceNodeCount": 3,
+    "generatedNodeCount": 6
+  }
+}
+```
+
+只生成服务器文件并返回摘要，不提供下载接口或历史列表。请求示例见 `rest/klash.http`。
