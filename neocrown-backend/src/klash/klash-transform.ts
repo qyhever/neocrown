@@ -97,45 +97,48 @@ export function transformKlash(template: string, ips: readonly string[]) {
   }
 
   const groupRange = sectionRange('proxy-groups')
-  let groupStart = -1
+  const groupInsertions: { index: number; lines: string[] }[] = []
+  let hasSelectionGroup = false
   for (let index = groupRange.start + 1; index < groupRange.end; index++) {
-    if (
-      /^ {2}- name:/.test(lines[index]) &&
-      /^(?:🚀\s*)?节点选择$/.test(readName(lines[index]).trim())
-    ) {
-      groupStart = index
+    if (!/^ {2}- name:/.test(lines[index])) continue
+    const name = readName(lines[index]).trim()
+    const isSelection = /^(?:🚀\s*)?节点选择$/.test(name)
+    if (!isSelection && !/^(?:♻️?\s*)?自动选择$/.test(name)) continue
+    if (isSelection) hasSelectionGroup = true
+
+    let groupEnd = index + 1
+    while (groupEnd < groupRange.end && !/^ {2}- /.test(lines[groupEnd]))
+      groupEnd++
+    let listStart = index + 1
+    while (listStart < groupEnd && !/^ {4}proxies:\s*$/.test(lines[listStart]))
+      listStart++
+    if (listStart === groupEnd)
+      throw new Error(`“${name}”代理组缺少 proxies 列表`)
+
+    // 插入到最后一个列表项之后，保留下一代理组前的空行和说明注释。
+    let insertionIndex = listStart + 1
+    for (let cursor = listStart + 1; cursor < groupEnd; cursor++) {
+      const line = lines[cursor]
+      if (/^ {6}- \S/.test(line)) {
+        insertionIndex = cursor + 1
+        continue
+      }
+      if (/^\s*(#.*)?$/.test(line)) continue
+      if (/^\s*-/.test(line) || /^ {6}\S/.test(line))
+        throw new Error('代理组 proxies 必须使用六空格缩进的块式列表')
       break
     }
+    groupInsertions.push({
+      index: insertionIndex,
+      lines: newNames.map((name) => `      - ${JSON.stringify(name)}`),
+    })
   }
-  if (groupStart === -1) throw new Error('模板缺少“节点选择”代理组')
-
-  let groupEnd = groupStart + 1
-  while (groupEnd < groupRange.end && !/^ {2}- /.test(lines[groupEnd]))
-    groupEnd++
-  let listStart = groupStart + 1
-  while (listStart < groupEnd && !/^ {4}proxies:\s*$/.test(lines[listStart]))
-    listStart++
-  if (listStart === groupEnd)
-    throw new Error('“节点选择”代理组缺少 proxies 列表')
-  let listEnd = listStart + 1
-  while (listEnd < groupEnd) {
-    const line = lines[listEnd]
-    if (/^ {6}- \S/.test(line) || /^\s*(#.*)?$/.test(line)) {
-      listEnd++
-      continue
-    }
-    if (/^\s*-/.test(line) || /^ {6}\S/.test(line))
-      throw new Error('代理组 proxies 必须使用六空格缩进的块式列表')
-    break
-  }
+  if (!hasSelectionGroup) throw new Error('模板缺少“节点选择”代理组')
 
   // 从后往前插入，保证前面的行号不受影响。
   const insertions = [
     { index: proxyRange.end, lines: [...newNodes, ''] },
-    {
-      index: listEnd,
-      lines: newNames.map((name) => `      - ${JSON.stringify(name)}`),
-    },
+    ...groupInsertions,
   ].sort((a, b) => b.index - a.index)
   for (const insertion of insertions)
     lines.splice(insertion.index, 0, ...insertion.lines)

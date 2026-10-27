@@ -87,6 +87,69 @@ describe('transformKlash', () => {
         expect(result.content.replace(/\r\n/g, '')).not.toContain('\n')
     },
   )
+  it.each(['\n', '\r\n'])(
+    'adds nodes to both groups before trailing comments with %j',
+    (newline) => {
+      const source = `proxies:
+  - name: "US-RN-CF-Vless-WS"
+    server: original.example
+proxy-groups:
+  # 手动选择
+  - name: "🚀 节点选择"
+    type: select
+    proxies:
+      - "♻️ 自动选择"
+      - "US-RN-CF-Vless-WS"
+
+  # 自动测速选择
+  - name: "♻️ 自动选择"
+    type: url-test
+    proxies:
+      - "US-RN-CF-Vless-WS"
+    url: http://detectportal.firefox.com/success.txt
+    interval: 300
+
+  # 其他代理组
+  - name: other
+    proxies:
+      - DIRECT
+rules:
+  - MATCH,other
+`.replace(/\n/g, newline)
+      const result = transformKlash(source, ['192.0.2.1', '192.0.2.2'])
+      const members = [
+        '      - "US-RN-CF-Vless-WS"',
+        '      - "US-RN-CF-Vless-WS-1"',
+        '      - "US-RN-CF-Vless-WS-2"',
+      ].join(newline)
+      expect(result.content).toContain(
+        `${members}${newline}${newline}  # 自动测速选择`,
+      )
+      expect(result.content).toContain(
+        `${members}${newline}    url: http://detectportal.firefox.com/success.txt${newline}    interval: 300`,
+      )
+      expect(
+        result.content.slice(result.content.indexOf('  # 其他代理组')),
+      ).toBe(source.slice(source.indexOf('  # 其他代理组')))
+    },
+  )
+  it('rejects an automatic selection group without a block proxies list', () => {
+    const source = template.replace(
+      '  - name: other',
+      '  - name: "♻️ 自动选择"',
+    )
+    expect(() =>
+      transformKlash(source.replace('    proxies:\n      - DIRECT', ''), [
+        '::1',
+      ]),
+    ).toThrow('代理组缺少 proxies 列表')
+    expect(() =>
+      transformKlash(
+        source.replace('    proxies:\n      - DIRECT', '    proxies: [DIRECT]'),
+        ['::1'],
+      ),
+    ).toThrow('代理组缺少 proxies 列表')
+  })
   it.each([
     ['"quote\\"name" # comment', 'quote"name-1'],
     ["'it''s edge'", "it's edge-1"],
