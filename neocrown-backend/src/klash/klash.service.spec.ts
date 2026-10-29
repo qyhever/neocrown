@@ -19,6 +19,10 @@ describe('KlashService', () => {
   let resultPath: string
   let service: KlashService
   beforeEach(async () => {
+    jest.useFakeTimers({
+      now: new Date('2026-10-29T01:02:03Z'),
+      doNotFake: ['nextTick', 'setImmediate'],
+    })
     directory = await fs.mkdtemp(join(tmpdir(), 'neocrown-klash-'))
     templatePath = join(directory, 'template.yaml')
     resultPath = join(directory, 'results', 'nested')
@@ -31,14 +35,15 @@ describe('KlashService', () => {
   })
   afterEach(async () => {
     jest.restoreAllMocks()
+    jest.useRealTimers()
     await fs.rm(directory, { recursive: true, force: true })
   })
   it('uses Shanghai dates across UTC day and year boundaries', () => {
     expect(shanghaiFilename(new Date('2026-12-31T16:00:00Z'))).toBe(
-      '20270101.yaml',
+      '20270101000000.yaml',
     )
     expect(shanghaiFilename(new Date('2026-12-31T15:59:59Z'))).toBe(
-      '20261231.yaml',
+      '20261231235959.yaml',
     )
   })
   it('creates directories and overwrites from the original template', async () => {

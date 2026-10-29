@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { randomUUID } from 'node:crypto'
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { resolve, join } from 'node:path'
 import type { EnvironmentVariables } from '../config/environment.validation'
 import type { GenerateKlashResultDto } from './klash.dto'
@@ -18,10 +18,14 @@ export function shanghaiFilename(date = new Date()): string {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
   }).formatToParts(date)
   const part = (type: string) =>
     parts.find((value) => value.type === type)!.value
-  return `${part('year')}${part('month')}${part('day')}.yaml`
+  return `${part('year')}${part('month')}${part('day')}${part('hour')}${part('minute')}${part('second')}.yaml`
 }
 
 @Injectable()
@@ -78,6 +82,7 @@ export class KlashService {
         flag: 'wx',
         mode: 0o600,
       })
+      await chmod(temporaryPath, 0o644)
       await rename(temporaryPath, join(directory, filename))
     } catch {
       throw new InternalServerErrorException(
